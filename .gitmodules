@@ -1,0 +1,12 @@
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/dw-innovation/kid2-spot-frontend
+[submodule "apis/nlp"]
+	path = apis/nlp
+	url = https://github.com/dw-innovation/kid2-spot-nlp-api
+[submodule "apis/osmquery"]
+	path = apis/osmquery
+	url = https://github.com/dw-innovation/kid2-spot-osm-query-api
+[submodule "apis/osmtagsearch"]
+	path = apis/osmtagsearch
+	url = https://github.com/dw-innovation/kid2-spot-osm-tag-search-api
