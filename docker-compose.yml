@@ -1,0 +1,41 @@
+version: '3'
+services:
+  osmquery:
+    build:
+      context: ./apis/osmquery
+      dockerfile: Dockerfile
+    ports:
+      - "3000:5000"
+
+  nlp:
+    build:
+      context: ./apis/nlp
+      dockerfile: Dockerfile
+    ports:
+      - "4000:8080"
+    volumes:
+      - ./volumes/nlp/model:/app/model
+
+  osmtagsearch:
+    build:
+      context: ./apis/osmtagsearch
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xmx1024m
+    ports:
+      - "9200:9200"
+    networks:
+      - elastic
+    volumes:
+      - ./volumes/osmtagsearch/es_data:/usr/share/elasticsearch/data
+    user: 1000:1000
+  
+networks:
+  elastic:
