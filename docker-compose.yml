@@ -28,6 +28,8 @@ services:
       - "5000:8080"
     env_file:
       - ./.env
+    volumes:
+      - ./volumes/osmtagsearch/model:/app/model
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
