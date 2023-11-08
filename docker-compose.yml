@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:5000"
+    env_file:
+      - ./.env
 
   nlp:
     build:
@@ -15,6 +17,8 @@ services:
       - "4000:8080"
     volumes:
       - ./volumes/nlp/model:/app/model
+    env_file:
+      - ./.env
 
   osmtagsearch:
     build:
@@ -22,6 +26,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:8080"
+    env_file:
+      - ./.env
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
@@ -31,6 +37,8 @@ services:
       - ES_JAVA_OPTS=-Xmx1024m
     ports:
       - "9200:9200"
+    env_file:
+      - ./.env
     networks:
       - elastic
     volumes:
