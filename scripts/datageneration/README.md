@@ -6,7 +6,7 @@ data & results contain samples of the original input, as well as the
 output of each script.
 
 The original files needed to begin the process are the base bundle 
-database *Primary_Keys_filtered5.csv*, a additional file 
+database *Primary_Keys_filtered5.csv*, an additional file 
 containing definitions of relative spatial terms 
 *relative_spatial_terms.csv* and a list of all countries, states and 
 cities in the world *countries+states+cities.json*.
@@ -18,6 +18,10 @@ Here is a short description of all scripts in order of execution.
 After editing the database file, run this script to fill in the column 
 "combinations". These are used to limit the random draft to tag 
 combinations found in the OSM taginfo database.
+
+```shell
+scripts/retrieve_combinations.sh
+```
 
 ### 2) generate_combination_table.py
 
