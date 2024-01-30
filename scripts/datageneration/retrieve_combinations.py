@@ -151,8 +151,8 @@ class CombinationRetriever(object):
                         arbitrary_values.append(
                             {"key": tag_key, "value_list": tag_value})
 
-        self.tag_df.to_csv(tag_list_file)
-        pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file)
+        self.tag_df.to_csv(tag_list_file, index=False)
+        pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file, index=False)
         print("Saved all files!")
 
     def assign_combinations(self, arbitrary_tag_list, index, tag_key, all_tags, tag_value):
