@@ -78,6 +78,7 @@ def isRoman(s):
 class CombinationRetriever(object):
     def __init__(self, source):
         tag_df = pd.read_csv(source, index_col=False)
+        tag_df.drop_duplicates(subset='descriptors',inplace=True)
         tag_df["index"] = [i for i in range(len(tag_df))]
         self.tag_df = tag_df
         self.processed_data = {}
