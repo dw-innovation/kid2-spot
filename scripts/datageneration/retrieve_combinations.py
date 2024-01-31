@@ -76,12 +76,12 @@ def isRoman(s):
 
 
 class CombinationRetriever(object):
-    def __init__(self, source):
+    def __init__(self, source, num_examples):
         tag_df = pd.read_csv(source, index_col=False)
         tag_df.drop_duplicates(subset='descriptors',inplace=True)
         tag_df["index"] = [i for i in range(len(tag_df))]
         self.tag_df = tag_df
-        self.processed_data = {}
+        self.num_examples = num_examples
 
     def run(self, tag_list_file, arbitrary_value_list_file):
         '''
@@ -138,8 +138,7 @@ class CombinationRetriever(object):
                 for tag_key, tag_value in tag_key_value_pairs:
                     if tag_value == "***any***":
                         arbitrary_value_list = []
-                        for i in range(1,
-                                       50):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
+                        for i in range(1, self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
                             value_list = ti.get_page_of_key_values(tag_key, i)
                             for tag_value in value_list:
                                 if isRoman(tag_value['value']):
@@ -198,6 +197,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--source', help='domain-specific primary keys', required=True)
     parser.add_argument('--tag_list', help='Path to save the tag list', required=True)
+    parser.add_argument('--num_examples', help='Enter the number of examples to be fetched by taginfo', default=50)
     parser.add_argument('--arbitrary_value_list', help='Path to save the tag list', required=True)
 
     args = parser.parse_args()
@@ -206,4 +206,4 @@ if __name__ == '__main__':
     tag_list = args.tag_list
     arbitrary_value_list = args.arbitrary_value_list
 
-    CombinationRetriever(source=source).run(tag_list_file=tag_list, arbitrary_value_list_file=arbitrary_value_list)
+    CombinationRetriever(source=source, num_examples=args.num_examples).run(tag_list_file=tag_list, arbitrary_value_list_file=arbitrary_value_list)
