@@ -169,7 +169,7 @@ class QueryCombinationGenerator(object):
         # self.tag_lists = self.tag_df.loc[self.tag_df['type'] == 'core']['tags'].tolist()
 
     # is this for determining features, this mostly gives one combination, I think use_combs should not be in the function
-    def get_combs(self, drawn_idx, comb_chance, max_number_combs):
+    def get_combs(self, drawn_idx, max_number_combs):
         '''
         Takes a tag (key/value pair) and adds a variable number of random tags.
         In reality co-occurring combinations were determined earlier in this info stored in the
@@ -180,28 +180,20 @@ class QueryCombinationGenerator(object):
         :param float comb_chance: The chance whether combinations should be added at all
         :param int max_number_combs: The maximum number of combinations that can be added to a tag
         '''
-        print("combination selection")
-        print(drawn_idx)
+        tag_combs = self.all_tags[int(drawn_idx)]['combinations']
+        if not isNaN(tag_combs):
+            tag_combs = tag_combs.split("|")
+            comb_weights = [1 / (idx + 1) for idx in range(len(tag_combs))]
+            comb_weights = [w / sum(comb_weights) for w in comb_weights]
+            num_combs = np.random.choice(np.arange(len(tag_combs)), 1, p=comb_weights)[0] + 1
+            num_combs = min(num_combs, max_number_combs)
 
-        use_combs = np.random.choice([True, False], p=[comb_chance, 1 - comb_chance])
+            drawn_combs = np.random.choice(tag_combs, num_combs, replace=False)
+            if len(drawn_combs) > 0:
+                self.get_combs(drawn_combs, max_number_combs)
 
-        print(use_combs)
-
-        if use_combs:
-            tag_combs = self.all_tags[int(drawn_idx)]['combinations']
-            if not isNaN(tag_combs):
-                tag_combs = tag_combs.split("|")
-                comb_weights = [1 / (idx + 1) for idx in range(len(tag_combs))]
-                comb_weights = [w / sum(comb_weights) for w in comb_weights]
-                num_combs = np.random.choice(np.arange(len(tag_combs)), 1, p=comb_weights)[0] + 1
-                num_combs = min(num_combs, max_number_combs)
-
-                drawn_combs = np.random.choice(tag_combs, num_combs, replace=False)
-                if len(drawn_combs) > 0:
-                    self.get_combs(drawn_combs, comb_chance, max_number_combs)
-
-                for comb in drawn_combs:
-                    yield comb
+            for comb in drawn_combs:
+                yield comb
 
     def index_to_descriptors(self, index):
         return self.all_tags[int(index)]['descriptors']
@@ -333,11 +325,14 @@ class QueryCombinationGenerator(object):
                 #     combs = list(set(get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs)))
 
                 # ipek - i commented out the previous code snippet, and uncommented the others
-                combs = list(set(self.get_combs(drawn_idx, comb_chance, max_number_combs)))
-                print("=====combs=====")
-                print("max number of combs")
-                print(max_number_combs)
-                print(combs)
+                use_combs = np.random.choice([True, False], p=[comb_chance, 1 - comb_chance])
+
+                if use_combs:
+                    combs = list(set(self.get_combs(drawn_idx, comb_chance, max_number_combs)))
+                    print("=====combs=====")
+                    print("max number of combs")
+                    print(max_number_combs)
+                    print(combs)
 
                 if len(combs) > 0:
                     for comb_id, comb in enumerate(combs):
