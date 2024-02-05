@@ -454,6 +454,8 @@ class QueryCombinationGenerator(object):
         for obj_dicts in tqdm(self.generate_random_tag_combinations(num_queries), total=num_queries):
             tag_combinations = [x["props"] for x in obj_dicts]
 
+            print(tag_combinations)
+
             # ipek - i capsulate the area generation as function
             area_item = self.generate_area(area_chance)
 
@@ -550,8 +552,7 @@ if __name__ == '__main__':
     query_comb_generator = QueryCombinationGenerator(geolocations_file_path=geolocations_file_path,
                                                      tag_list_path=tag_list_path,
                                                      arbitrary_value_list_path=arbitrary_value_list_path)
-
-    num_queries = 10
+    num_queries = 100
     comb_df = query_comb_generator.run(output_filename, num_queries, True)
 
     # ipek - output should be jsonl
