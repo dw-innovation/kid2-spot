@@ -29,7 +29,6 @@ class TestCombinationRetriever(unittest.TestCase):
                     not any(t in tag for t in ["*", "[", " AND "]) or any(
                         t in tag for t in ["***any***", "***numeric***"])]
 
-
         # check if cuisine exists in the restaurant combinations
         tag_key = 'amenity'
         tag_value = 'restaurant'
@@ -46,9 +45,19 @@ class TestCombinationRetriever(unittest.TestCase):
         assert cuisine_exists
 
         # check highway example
-        tag_key = ''
-        tag_value = ''
+        tag_key = 'highway'
+        tag_value = 'motorway'
 
+        results = retriever.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
+
+        lane_exists = False
+
+        for result in results.split('|'):
+            if 'lane' in retriever.index_to_descriptors(int(result)):
+                lane_exists = True
+                continue
+
+        assert lane_exists
 
 
 if __name__ == '__main__':
