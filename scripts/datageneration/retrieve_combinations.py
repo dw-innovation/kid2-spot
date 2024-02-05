@@ -1,10 +1,11 @@
-from argparse import ArgumentParser
-from tqdm import tqdm
-from diskcache import Cache
-import pandas as pd
-import taginfo.query as ti
-import requests
 import unicodedata
+from argparse import ArgumentParser
+
+import pandas as pd
+import requests
+import taginfo.query as ti
+from diskcache import Cache
+from tqdm import tqdm
 
 cache = Cache("tmp")
 
@@ -77,9 +78,22 @@ def isRoman(s):
 
 class CombinationRetriever(object):
     def __init__(self, source, num_examples):
-        tag_df = pd.read_csv(source, index_col=False)
-        tag_df.drop_duplicates(subset='descriptors',inplace=True)
+        if source.endswith('xlsx'):
+            tag_df = pd.read_excel(source, engine='openpyxl')
+        else:
+            tag_df = pd.read_csv(source, index_col=False)
+
+        print(f"tag_df before duplicate {len(tag_df)}")
+        tag_df.drop_duplicates(subset='descriptors', inplace=True)
+        print(f"tag_df after duplicate {len(tag_df)}")
+
         tag_df["index"] = [i for i in range(len(tag_df))]
+
+        all_tags = {}
+        for tag in tag_df.to_dict(orient='records'):
+            all_tags[tag['index']] = tag
+
+        self.all_tags = all_tags
         self.tag_df = tag_df
         self.num_examples = num_examples
 
@@ -112,33 +126,41 @@ class CombinationRetriever(object):
 
         bundle_list_arb = self.tag_df.loc[
             (self.tag_df['type'] == 'attr') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
+
+        # what is difference between tag list and arbitrary tag list
         arbitrary_tag_list = [tag.strip() for candidate in bundle_list_arb for tag in candidate.split(",") if
                               not any(t in tag for t in ["*", "[", " AND "]) or any(
                                   t in tag for t in ["***any***", "***numeric***"])]
+
         arbitrary_tag_list = [tag.split("=")[0] + "=" for tag in arbitrary_tag_list]
 
         # key_list_arb = tag_df.loc[(tag_df['type'] == 'attr') | (tag_df['type'] == 'core/attr'), 'key'].tolist()
         # value_list_arb = tag_df.loc[(tag_df['type'] == 'attr') | (tag_df['type'] == 'core/attr'), 'value'].tolist()
         # arbitrary_tag_list = ["{}=".format(a) for a, b in zip(key_list_arb, value_list_arb)]
 
-        for index, row in tqdm(self.tag_df.iterrows(), total=len(self.tag_df)):
-            curr_tag_list = [tag.strip() for tag in row['tags'].split(",") if
-                             tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
+        for idx, row in tqdm(self.all_tags.items(), total=len(self.all_tags)):
+            associated_tags = [tag.strip() for tag in row['tags'].split(",") if
+                               tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
 
-            if len(curr_tag_list) == 0:
+            if len(associated_tags) == 0:
+                print(f"No assocated tags found for {row['descriptors']}")
                 continue
 
-            tag_key_value_pairs = list(map(lambda pair: (pair.split('=')[0], pair.split('=')[1]), curr_tag_list))
+            tag_key_value_pairs = list(map(lambda pair: (pair.split('=')[0], pair.split('=')[1]), associated_tags))
 
             if row['type'] == 'core':
                 for tag_key, tag_value in tag_key_value_pairs:
-                    self.assign_combinations(arbitrary_tag_list, index, tag_key, tag_list, tag_value)
+                    combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
+                    self.tag_df.at[index, 'combinations'] = combinations
+
+                    break
 
             else:
                 for tag_key, tag_value in tag_key_value_pairs:
                     if tag_value == "***any***":
                         arbitrary_value_list = []
-                        for i in range(1, self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
+                        for i in range(1,
+                                       self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
                             value_list = ti.get_page_of_key_values(tag_key, i)
                             for tag_value in value_list:
                                 if isRoman(tag_value['value']):
@@ -155,7 +177,10 @@ class CombinationRetriever(object):
         pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file, index=False)
         print("Saved all files!")
 
-    def assign_combinations(self, arbitrary_tag_list, index, tag_key, all_tags, tag_value):
+    def index_to_descriptors(self, index):
+        return self.all_tags[index]['descriptors']
+
+    def assign_combinations(self, arbitrary_tag_list, tag_key, all_tags, tag_value):
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)
 
         if combinations['total'] == 0:
@@ -169,6 +194,8 @@ class CombinationRetriever(object):
             other_tag_arbitrary = combination['other_key'] + '='
 
             if other_tag in all_tags:
+                # ipek- this might be problematic for the initial tags unless there is bi-directional relationship
+                # i saw also one tag associated with cuisine
                 # matching_row = tag_df[
                 #     (tag_df['key'] == item['other_key']) & (tag_df['value'] == item['other_value'])]
                 matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
@@ -186,7 +213,7 @@ class CombinationRetriever(object):
         if len(combination_list) > 0:
             combination_list = list(set(combination_list))
             string_combination = '|'.join(str(number) for number in combination_list)
-            self.tag_df.at[index, 'combinations'] = string_combination
+            return string_combination
 
 
 if __name__ == '__main__':
@@ -206,4 +233,5 @@ if __name__ == '__main__':
     tag_list = args.tag_list
     arbitrary_value_list = args.arbitrary_value_list
 
-    CombinationRetriever(source=source, num_examples=args.num_examples).run(tag_list_file=tag_list, arbitrary_value_list_file=arbitrary_value_list)
+    CombinationRetriever(source=source, num_examples=args.num_examples).run(tag_list_file=tag_list,
+                                                                            arbitrary_value_list_file=arbitrary_value_list)

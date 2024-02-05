@@ -3,3 +3,4 @@ taginfo==0.0.3
 tqdm==4.66.1
 diskcache==5.6.3
 requests==2.31.0
+openpyxl==3.1.2
