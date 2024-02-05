@@ -1,9 +1,10 @@
-import numpy as np
-import pandas as pd
 import json
 import random
-from tqdm import tqdm
 from argparse import ArgumentParser
+
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
 
 
 def extract_variables(input_string):
@@ -113,9 +114,6 @@ class NpEncoder(json.JSONEncoder):
         return super(NpEncoder, self).default(obj)
 
 
-
-
-
 # ipek - what does it do?
 def pick_tag(tag_list_string):
     tag_list = tag_list_string.split(",")
@@ -136,9 +134,7 @@ class QueryCombinationGenerator(object):
         self.countries = countries
         self.states = states
         self.cities = cities
-
-        self.tag_df = pd.read_csv(tag_list_path)
-        self.arbitrary_value_df = pd.read_csv(arbitrary_value_list_path)
+        self.arbitrary_value_df = pd.read_csv(arbitrary_value_list_path, dtype={'index': int})
 
         # Select type="core" as these are base categories (e.g. "house"), unlike attributes (e.g. "height")
 
@@ -150,22 +146,37 @@ class QueryCombinationGenerator(object):
         # todo: find a better name
         self.descriptor_list = {}
         self.tag_lists = {}
-        for idx, row in self.tag_df[self.tag_df['type'] == 'core'].iterrows():
-            self.descriptor_list[row['index']] = row['descriptors']
-            self.tag_lists[row['index']] = row['tags']
 
-        self.numeric_list = [num.split("=")[0] + "=" for num in self.tag_df['tags'].tolist() if "***numeric***" in num]
+        # for idx, row in self.tag_df[self.tag_df['type'] == 'core'].iterrows():
+        #     self.descriptor_list[row['index']] = row['descriptors']
+        #     self.tag_lists[row['index']] = row['tags']
+
+        tag_df = pd.read_csv(tag_list_path)
+        tag_df = tag_df[tag_df.select_dtypes(float).notna().any(axis=1)]
+
+        descriptors_to_idx = {}
+        all_tags = {}
+        for tag in tag_df.to_dict(orient='records'):
+            all_tags[int(tag['index'])] = tag
+            descriptors = tag['descriptors'].split('|')
+
+            for descriptor in descriptors:
+                descriptors_to_idx[descriptor.strip()] = int(tag['index'])
+
+        self.desriptors_to_idx = descriptors_to_idx
+        self.all_tags = all_tags
+        self.numeric_list = [num.split("=")[0] + "=" for num in tag_df['tags'].tolist() if "***numeric***" in num]
         # self.tag_lists = self.tag_df.loc[self.tag_df['type'] == 'core']['tags'].tolist()
 
     # is this for determining features, this mostly gives one combination, I think use_combs should not be in the function
-    def get_combs(self, drawn_idx, tag_df, comb_chance, max_number_combs):
+    def get_combs(self, drawn_idx, comb_chance, max_number_combs):
         '''
         Takes a tag (key/value pair) and adds a variable number of random tags.
         In reality co-occurring combinations were determined earlier in this info stored in the
         tag_df dataframe.
 
         :param str drawn_tag: The current key/value pair
-        :param pd.dataframe tag_df: Dataframe of all tags plus additional info such as valid tag combinations
+        :param pd.dataframe tag_df: Dataframe of all tags plus additional info such as valid tag combinations -- get from self.tag_df
         :param float comb_chance: The chance whether combinations should be added at all
         :param int max_number_combs: The maximum number of combinations that can be added to a tag
         '''
@@ -177,7 +188,7 @@ class QueryCombinationGenerator(object):
         print(use_combs)
 
         if use_combs:
-            tag_combs = tag_df.iloc[int(drawn_idx)]['combinations']
+            tag_combs = self.all_tags[int(drawn_idx)]['combinations']
             if not isNaN(tag_combs):
                 tag_combs = tag_combs.split("|")
                 comb_weights = [1 / (idx + 1) for idx in range(len(tag_combs))]
@@ -187,10 +198,13 @@ class QueryCombinationGenerator(object):
 
                 drawn_combs = np.random.choice(tag_combs, num_combs, replace=False)
                 if len(drawn_combs) > 0:
-                    self.get_combs(drawn_combs, tag_df, comb_chance, max_number_combs)
+                    self.get_combs(drawn_combs, comb_chance, max_number_combs)
 
                 for comb in drawn_combs:
                     yield comb
+
+    def index_to_descriptors(self, index):
+        return self.all_tags[int(index)]['descriptors']
 
     def generate_random_tag_combinations(self, num_queries):
         '''
@@ -319,12 +333,11 @@ class QueryCombinationGenerator(object):
                 #     combs = list(set(get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs)))
 
                 # ipek - i commented out the previous code snippet, and uncommented the others
-                combs = list(set(self.get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs)))
+                combs = list(set(self.get_combs(drawn_idx, comb_chance, max_number_combs)))
                 print("=====combs=====")
                 print("max number of combs")
                 print(max_number_combs)
                 print(combs)
-
 
                 if len(combs) > 0:
                     for comb_id, comb in enumerate(combs):
@@ -383,7 +396,6 @@ class QueryCombinationGenerator(object):
                             #     combs[comb_id] = row['key'] + "=" + row['value']
 
                         combs[comb_id] = curr_desc + "#" + combs[comb_id]
-
 
                 drawn_tags[di_id].extend(combs)
 

@@ -151,10 +151,9 @@ class CombinationRetriever(object):
             if row['type'] == 'core':
                 for tag_key, tag_value in tag_key_value_pairs:
                     combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
-                    self.tag_df.at[row['index'], 'combinations'] = combinations
 
-                    break
-
+                    if combinations:
+                        self.tag_df.at[row['index'], 'combinations'] = combinations
             else:
                 for tag_key, tag_value in tag_key_value_pairs:
                     if tag_value == "***any***":
@@ -233,6 +232,8 @@ class CombinationRetriever(object):
             filtered_combinations = list(set(filtered_combinations))
             string_combination = '|'.join(str(number) for number in filtered_combinations)
             return string_combination
+
+        return None
 
 
 if __name__ == '__main__':
