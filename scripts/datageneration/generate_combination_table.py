@@ -418,7 +418,7 @@ class QueryCombinationGenerator(object):
 
         return countries, states, cities
 
-    def run(self, output_filename, num_queries, save_json=False):
+    def run(self, area_chance, output_filename, num_queries, save_json=False):
         '''
         A method that generates random query combinations and optionally saves them to a JSON file.
         It gets a list of random tag combinations and adds additional information that is required to generate
@@ -427,19 +427,13 @@ class QueryCombinationGenerator(object):
         (2) within radius: a single radius within which all objects are located, (3) in area: general search for all objects
         within given area.
 
-
+        :param float area_chance: probability for picking up real name
         :param str tag_list_path: Path to the CSV file containing all tags + a lot of meta info
         :param str arbitrary_value_list_path: Path to CSV file containing samples for arbitrary and categorical values
         :param str output_filename: Name under which the resulting output file should be stored (minus version specification)
         :param str version: Defines whether "train", "dev", or "test" set is currently generated
         :param bool save_json: Boolean that determines whether a JSON file should be saved or not
         '''
-        area_chance = 0.9  # The chance that a specific area will be added to the query
-
-        # print(csc_dict)
-
-        # areas = ["Berlin", "Cologne", "Koblenz"]
-
         # ipek - node types are not used
         node_types = ["nwr", "cluster", "group"]
         tasks = ["within_radius", "in_area", "individual_distances"]
@@ -541,6 +535,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag_list_path', help='tag list file generated via retrieve_combinations')
     parser.add_argument('--arbitrary_value_list_path', help='Arbitrary value list generated via combinations')
     parser.add_argument('--output_filename', help='File to save the output')
+    parser.add_argument('--area_chance', help='Add to probability of picking real area', type=float)
 
     args = parser.parse_args()
 
@@ -552,8 +547,10 @@ if __name__ == '__main__':
     query_comb_generator = QueryCombinationGenerator(geolocations_file_path=geolocations_file_path,
                                                      tag_list_path=tag_list_path,
                                                      arbitrary_value_list_path=arbitrary_value_list_path)
+    area_chance = args.area_chance
     num_queries = 100
-    comb_df = query_comb_generator.run(output_filename, num_queries, True)
+    comb_df = query_comb_generator.run(area_chance=area_chance, output_filename=output_filename,
+                                       num_queries=num_queries, save_json=True)
 
     # ipek - output should be jsonl
 
