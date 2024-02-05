@@ -91,7 +91,7 @@ class CombinationRetriever(object):
 
         all_tags = {}
         for tag in tag_df.to_dict(orient='records'):
-            all_tags[tag['index']] = tag
+            all_tags[int(tag['index'])] = tag
 
         self.all_tags = all_tags
         self.tag_df = tag_df
@@ -151,7 +151,7 @@ class CombinationRetriever(object):
             if row['type'] == 'core':
                 for tag_key, tag_value in tag_key_value_pairs:
                     combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
-                    self.tag_df.at[index, 'combinations'] = combinations
+                    self.tag_df.at[row['index'], 'combinations'] = combinations
 
                     break
 
@@ -187,9 +187,8 @@ class CombinationRetriever(object):
             return None
 
         filtered_combinations = []
-        for combination in tqdm(combinations[
-                                    'data'], total=combinations[
-            'total']):  # Search the possible combinations, if they are also part of the local tag database, append them as possible combinations
+        for combination in combinations[
+            'data']:  # Search the possible combinations, if they are also part of the local tag database, append them as possible combinations
 
             other_tag = combination['other_key'] + '=' + combination['other_value']
             other_tag_arbitrary = combination['other_key'] + '='
@@ -205,15 +204,25 @@ class CombinationRetriever(object):
                 # corresponding_index = matching_row.index[0]
 
                 # ipek changes:
-                matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
+                try:
+                    matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
+                except ValueError as e:
+                    print(f"combination: {combination}, other tag {other_tag} got an exception: {e}")
+                    continue
+
                 for matched_index in matching_row['index'].tolist():
                     filtered_combinations.append(matched_index)
 
                 # print(key, " - ", value, " - ", matching_row["tags"].values[0])
             elif other_tag_arbitrary in arbitrary_tag_list and isRoman(combination['other_value']):
                 # matching_row = tag_df[(tag_df['key'] == item['other_key'])]
-                matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag_arbitrary)]
                 # corresponding_index = matching_row.index[0]
+
+                try:
+                    matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag_arbitrary)]
+                except ValueError as e:
+                    print(f"combination: {combination}, other tag {other_tag_arbitrary} got an exception: {e}")
+                    continue
 
                 # ipek changes:
                 for matched_index in matching_row['index'].tolist():

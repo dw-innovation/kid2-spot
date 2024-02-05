@@ -1,4 +1,5 @@
 import unittest
+
 from datageneration.retrieve_combinations import CombinationRetriever
 
 '''
@@ -10,9 +11,6 @@ class TestCombinationRetriever(unittest.TestCase):
 
     def test_assign_combination(self):
         retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_test.xlsx', num_examples=100)
-
-        tag_key = 'amenity'
-        tag_value = 'restaurant'
 
         arbitrary_tag_list = ['cuisine=', 'building:levels=', 'building:material=', 'height=', 'footway=', 'footway=',
                               'highway=', 'railway=', 'path=', 'crossing:island=', 'highway=', 'cycleway=', 'highway=',
@@ -31,6 +29,11 @@ class TestCombinationRetriever(unittest.TestCase):
                     not any(t in tag for t in ["*", "[", " AND "]) or any(
                         t in tag for t in ["***any***", "***numeric***"])]
 
+
+        # check if cuisine exists in the restaurant combinations
+        tag_key = 'amenity'
+        tag_value = 'restaurant'
+
         results = retriever.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
 
         cuisine_exists = False
@@ -41,6 +44,11 @@ class TestCombinationRetriever(unittest.TestCase):
                 continue
 
         assert cuisine_exists
+
+        # check highway example
+        tag_key = ''
+        tag_value = ''
+
 
 
 if __name__ == '__main__':
