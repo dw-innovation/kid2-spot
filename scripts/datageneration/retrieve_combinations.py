@@ -186,33 +186,43 @@ class CombinationRetriever(object):
         if combinations['total'] == 0:
             return None
 
-        combination_list = []
+        filtered_combinations = []
+        for combination in tqdm(combinations[
+                                    'data'], total=combinations[
+            'total']):  # Search the possible combinations, if they are also part of the local tag database, append them as possible combinations
 
-        for combination in combinations[
-            'data']:  # Search the possible combinations, if they are also part of the local tag database, append them as possible combinations
             other_tag = combination['other_key'] + '=' + combination['other_value']
             other_tag_arbitrary = combination['other_key'] + '='
 
             if other_tag in all_tags:
                 # ipek- this might be problematic for the initial tags unless there is bi-directional relationship
-                # i saw also one tag associated with cuisine
+                # i saw also one tag associated with cuisine: cuisine=coffee_shop, is it supposed to be there?
                 # matching_row = tag_df[
                 #     (tag_df['key'] == item['other_key']) & (tag_df['value'] == item['other_value'])]
+
+                ## the below value sometimes more than one, you take the first value if this is the case, but would it cause missing important ones? update: this causes error of not having cuisine
+                # matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
+                # corresponding_index = matching_row.index[0]
+
+                # ipek changes:
                 matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
-                corresponding_index = matching_row.index[0]
-                combination_list.append(corresponding_index)
+                for matched_index in matching_row['index'].tolist():
+                    filtered_combinations.append(matched_index)
 
                 # print(key, " - ", value, " - ", matching_row["tags"].values[0])
             elif other_tag_arbitrary in arbitrary_tag_list and isRoman(combination['other_value']):
                 # matching_row = tag_df[(tag_df['key'] == item['other_key'])]
                 matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag_arbitrary)]
-                corresponding_index = matching_row.index[0]
-                combination_list.append(corresponding_index)
+                # corresponding_index = matching_row.index[0]
+
+                # ipek changes:
+                for matched_index in matching_row['index'].tolist():
+                    filtered_combinations.append(matched_index)
 
                 # print(key, " - ", value, " - ", matching_row["tags"].values[0])
-        if len(combination_list) > 0:
-            combination_list = list(set(combination_list))
-            string_combination = '|'.join(str(number) for number in combination_list)
+        if len(filtered_combinations) > 0:
+            filtered_combinations = list(set(filtered_combinations))
+            string_combination = '|'.join(str(number) for number in filtered_combinations)
             return string_combination
 
 
