@@ -262,7 +262,7 @@ class QueryCombinationGenerator(object):
             print("drawn indices")
             print(draft_indices)
 
-            drawn_tags = [pick_tag(self.tag_lists[draft_index]) for draft_index in draft_indices]
+            drawn_tags = [pick_tag(self.core_tags[draft_index]['tags']) for draft_index in draft_indices]
 
             # drawn_tags = np.random.choice(tag_list, num_tags, replace=False).tolist()
 
@@ -338,70 +338,65 @@ class QueryCombinationGenerator(object):
 
                 if use_combs:
                     combs = list(set(self.get_combs(drawn_idx, comb_chance, max_number_combs)))
-                    print("=====combs=====")
-                    print("max number of combs")
-                    print(max_number_combs)
-                    print(combs)
-
-                if len(combs) > 0:
-                    for comb_id, comb in enumerate(combs):
-                        row = self.tag_df.loc[int(comb)]
-                        row_tag = pick_tag(row['tags'])
-                        row_key = row_tag.split("=")[0]
-                        row_val = row_tag.split("=")[1]
-                        curr_desc = np.random.choice(row['descriptors'].split("|"), 1)[0]
-                        if "***any***" in row_val or "***numeric***" in row_val:
-                            comb_tag = row_key + "="
-                        else:
-                            if "|" in row_val:
-                                comb_tag = row_key + "=" + np.random.choice(row_val.split("|"), 1)[0]
+                    if len(combs) > 0:
+                        for comb_id, comb in enumerate(combs):
+                            row = self.tag_df.loc[int(comb)]
+                            row_tag = pick_tag(row['tags'])
+                            row_key = row_tag.split("=")[0]
+                            row_val = row_tag.split("=")[1]
+                            curr_desc = np.random.choice(row['descriptors'].split("|"), 1)[0]
+                            if "***any***" in row_val or "***numeric***" in row_val:
+                                comb_tag = row_key + "="
                             else:
-                                comb_tag = row_key + "=" + row_val
-
-                        if comb_tag in self.numeric_list:
-                            comb_tag = comb_tag[:-1] + np.random.choice([">", "=", "<"], 1)[
-                                0]  # ">=", "<=",  For numeric values, randomly use one of these comparison operators
-                            if "height" in comb_tag:
-                                combs[comb_id] = comb_tag + get_random_decimal_with_metric(2000)
-                            else:
-                                combs[comb_id] = comb_tag + str(np.random.choice(np.arange(50), 1)[0])
-
-                        elif len(comb_tag.split("=")[1]) == 0:
-                            arb_vals = \
-                                self.arbitrary_value_df.loc[self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
-                                    "value_list"].iloc[0].split("|")
-                            drawn_val = np.random.choice(arb_vals, 1)[0]
-                            if comb_tag.split("=")[0] in ["name", "addr:street"]:
-                                if len(drawn_val) <= 1:
-                                    version = "equals"
+                                if "|" in row_val:
+                                    comb_tag = row_key + "=" + np.random.choice(row_val.split("|"), 1)[0]
                                 else:
-                                    # version = np.random.choice(["begins", "ends", "contains", "equals"], 1)[0]
-                                    version = np.random.choice(["contains", "equals"], 1)[
-                                        0]  # Randomly select one of these variants and format the string + regex accordingly
-                                # if version == "begins":
-                                #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
-                                #     combs[comb_id] = comb_tag[:-1] + "~\"^" + drawn_val[:cutoff] + "\""
-                                # elif version == "ends":
-                                #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
-                                #     combs[comb_id] = comb_tag[:-1] + "~\"" + drawn_val[cutoff:] + "$\""
-                                if version == "contains":
-                                    len_substring = np.random.choice(np.arange(1, len(drawn_val)))
-                                    idx = random.randrange(0, len(drawn_val) - len_substring + 1)
-                                    combs[comb_id] = comb_tag[:-1] + "~" + drawn_val[idx: (idx + len_substring)]
+                                    comb_tag = row_key + "=" + row_val
+
+                            if comb_tag in self.numeric_list:
+                                comb_tag = comb_tag[:-1] + np.random.choice([">", "=", "<"], 1)[
+                                    0]  # ">=", "<=",  For numeric values, randomly use one of these comparison operators
+                                if "height" in comb_tag:
+                                    combs[comb_id] = comb_tag + get_random_decimal_with_metric(2000)
+                                else:
+                                    combs[comb_id] = comb_tag + str(np.random.choice(np.arange(50), 1)[0])
+
+                            elif len(comb_tag.split("=")[1]) == 0:
+                                arb_vals = \
+                                    self.arbitrary_value_df.loc[self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
+                                        "value_list"].iloc[0].split("|")
+                                drawn_val = np.random.choice(arb_vals, 1)[0]
+                                if comb_tag.split("=")[0] in ["name", "addr:street"]:
+                                    if len(drawn_val) <= 1:
+                                        version = "equals"
+                                    else:
+                                        # version = np.random.choice(["begins", "ends", "contains", "equals"], 1)[0]
+                                        version = np.random.choice(["contains", "equals"], 1)[
+                                            0]  # Randomly select one of these variants and format the string + regex accordingly
+                                    # if version == "begins":
+                                    #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
+                                    #     combs[comb_id] = comb_tag[:-1] + "~\"^" + drawn_val[:cutoff] + "\""
+                                    # elif version == "ends":
+                                    #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
+                                    #     combs[comb_id] = comb_tag[:-1] + "~\"" + drawn_val[cutoff:] + "$\""
+                                    if version == "contains":
+                                        len_substring = np.random.choice(np.arange(1, len(drawn_val)))
+                                        idx = random.randrange(0, len(drawn_val) - len_substring + 1)
+                                        combs[comb_id] = comb_tag[:-1] + "~" + drawn_val[idx: (idx + len_substring)]
+                                    else:
+                                        combs[comb_id] = comb_tag + drawn_val
                                 else:
                                     combs[comb_id] = comb_tag + drawn_val
                             else:
-                                combs[comb_id] = comb_tag + drawn_val
-                        else:
-                            combs[comb_id] = comb_tag
-                            # if "|" in row['value']:
-                            #     combs[comb_id] = row['key'] + "=" + np.random.choice(row['value'].split("|"), 1)[0]
-                            # else:
-                            #     combs[comb_id] = row['key'] + "=" + row['value']
+                                combs[comb_id] = comb_tag
+                                # if "|" in row['value']:
+                                #     combs[comb_id] = row['key'] + "=" + np.random.choice(row['value'].split("|"), 1)[0]
+                                # else:
+                                #     combs[comb_id] = row['key'] + "=" + row['value']
 
-                        combs[comb_id] = curr_desc + "#" + combs[comb_id]
+                            combs[comb_id] = curr_desc + "#" + combs[comb_id]
 
-                drawn_tags[di_id].extend(combs)
+                        drawn_tags[di_id].extend(combs)
 
                 obj_dict["props"] = drawn_tags[di_id]
                 obj_dicts.append(obj_dict)
