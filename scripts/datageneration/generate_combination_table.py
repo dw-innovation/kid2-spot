@@ -9,8 +9,12 @@ from tqdm import tqdm
 
 
 def extract_variables(input_string):
-    desc = input_string.split("#")[0]
-    tag = input_string.split("#")[1]
+    try:
+        desc = input_string.split("#")[0]
+        tag = input_string.split("#")[1]
+    except IndexError as e:
+        print(f"Index error while extracting variables {e} for {input_string}")
+        return None, None, None, None
     operators = ['=', '>', '<', '~']  # '>=', '<=',
     for op in operators:
         if op in input_string:
@@ -175,6 +179,7 @@ class QueryCombinationGenerator(object):
         # self.tag_lists = self.tag_df.loc[self.tag_df['type'] == 'core']['tags'].tolist()
 
     # is this for determining features, this mostly gives one combination, I think use_combs should not be in the function
+    # ipek - check why it is recursive???
     def get_combs(self, drawn_idx, max_number_combs):
         '''
         Takes a tag (key/value pair) and adds a variable number of random tags.
@@ -222,8 +227,8 @@ class QueryCombinationGenerator(object):
         max_number_tags_per_query = 4  # The maximum number of objects that will be included in one query
 
         # ipek - i would add it as max_number of features
-        max_number_combs = 2  # The maximum number of additional tags that will be added to one objects
-        comb_chance = 0.4  # Chance that additional tags will be added to a tag
+        max_number_combs = 4  # The maximum number of additional tags that will be added to one objects
+        comb_chance = 0.7  # Chance that additional tags will be added to a tag
         count_chance = 0.0  # Chance that the %count% tag will be added (indicating search for multiple objects)
 
         # weights = [1 / (idx + 1) for idx in range(max_number_tags_per_query)]
@@ -338,10 +343,20 @@ class QueryCombinationGenerator(object):
                     combs = list(set(self.get_combs(drawn_idx=drawn_idx, max_number_combs=max_number_combs)))
                     if len(combs) > 0:
                         for comb_id, comb in enumerate(combs):
-                            row = self.all_tags[int(comb)]
+                            try:
+                                row = self.all_tags[int(comb)]
+                            except ValueError as e:
+                                print(f"comb {comb} has value error: {e}")
+                                continue
                             row_tag = pick_tag(row['tags'])
                             row_key = row_tag.split("=")[0]
-                            row_val = row_tag.split("=")[1]
+
+                            try:
+                                row_val = row_tag.split("=")[1]
+                            except IndexError as e:
+                                continue
+                                print(f"Index error on {row_tag}: {e}")
+
                             curr_desc = np.random.choice(row['descriptors'].split("|"), 1)[0]
                             if "***any***" in row_val or "***numeric***" in row_val:
                                 comb_tag = row_key + "="
@@ -360,10 +375,13 @@ class QueryCombinationGenerator(object):
                                     combs[comb_id] = comb_tag + str(np.random.choice(np.arange(50), 1)[0])
 
                             elif len(comb_tag.split("=")[1]) == 0:
-                                arb_vals = \
-                                    self.arbitrary_value_df.loc[
-                                        self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
-                                        "value_list"].iloc[0].split("|")
+                                try:
+                                    arb_vals = \
+                                        self.arbitrary_value_df.loc[
+                                            self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
+                                            "value_list"].iloc[0].split("|")
+                                except IndexError as e:
+                                    print(f'{comb_tag} has an indexing error {e}')
                                 drawn_val = np.random.choice(arb_vals, 1)[0]
                                 if comb_tag.split("=")[0] in ["name", "addr:street"]:
                                     if len(drawn_val) <= 1:
@@ -560,6 +578,9 @@ if __name__ == '__main__':
     parser.add_argument('--output_folder', help='Folder to save the output')
     parser.add_argument('--write_output', action='store_true')
     parser.add_argument('--area_chance', help='Add to probability of picking real area', type=float)
+    parser.add_argument('--training_samples', help='number of samples to generate as a training set', type=int)
+    parser.add_argument('--development_samples', help='number of samples to generate as a development set', type=int)
+    parser.add_argument('--testing_samples', help='number of samples to generate as a test set', type=int)
 
     args = parser.parse_args()
 
@@ -572,15 +593,23 @@ if __name__ == '__main__':
                                                      tag_list_path=tag_list_path,
                                                      arbitrary_value_list_path=arbitrary_value_list_path)
     area_chance = args.area_chance
-    num_queries = 100
-    generated_combs = query_comb_generator.run(area_chance=area_chance,
-                                               num_queries=num_queries)
 
     output_folder = Path(args.output_folder)
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    if args.write_output:
-        write_output(generated_combs, output_file=output_folder / 'test.jsonl')
+    dataset_splits = {
+        'train': args.training_samples,
+        'development': args.development_samples,
+        'test': args.testing_samples
+    }
+
+    for ds_split, num_samples in dataset_splits.items():
+
+        generated_combs = query_comb_generator.run(area_chance=area_chance,
+                                                   num_queries=num_samples)
+
+        if args.write_output:
+            write_output(generated_combs, output_file=output_folder / f'{ds_split}.jsonl')
 
     # # Example input dictionary
     # json_dict = {
