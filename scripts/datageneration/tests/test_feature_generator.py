@@ -1,6 +1,8 @@
+import json
+import os
 import unittest
 
-from datageneration.generate_combination_table import QueryCombinationGenerator
+from datageneration.generate_combination_table import QueryCombinationGenerator, write_output
 from pytest import approx
 
 '''
@@ -19,11 +21,50 @@ class TestGenerateCombination(unittest.TestCase):
                                                               arbitrary_value_list_path=arbitrary_value_list_path)
 
     def test_generate_random_tag_combinations(self):
-        num_queries = 20
+        # todo: not a really test case, find an usecase
+        num_queries = 100
         generated_tag_combs = self.query_comb_generator.generate_random_tag_combinations(num_queries)
 
         for comb in generated_tag_combs:
             print(comb)
+
+    def test_write_to_file(self):
+        test_samples = [{'a': {'t': 'area', 'v': 'Ceiba'},
+                         'ns': [{'id': 0, 'flts': [{'k': 'landuse', 'v': 'grass', 'op': '=', 'n': 'lawn'}], 't': 'nwr'},
+                                {'id': 1,
+                                 'flts': [{'k': 'railway', 'v': 'railway_crossing', 'op': '=', 'n': 'level crossing'}],
+                                 't': 'nwr'}, {'id': 2, 'flts': [
+                                 {'k': 'social_facility:for', 'v': 'senior', 'op': '=', 'n': 'convalescent hospital'}],
+                                               't': 'nwr'},
+                                {'id': 3,
+                                 'flts': [{'k': 'amenity', 'v': 'theatre', 'op': '=', 'n': 'performing arts center'}],
+                                 't': 'nwr'}], 'es': [{'src': 0, 'tgt': 1, 't': 'dist', 'dist': '825 km'},
+                                                      {'src': 1, 'tgt': 2, 't': 'dist', 'dist': '6.67 cm'},
+                                                      {'src': 2, 'tgt': 3, 't': 'dist', 'dist': '2.98 yd'}]},
+                        {'a': {'t': 'area', 'v': 'Plymouth'},
+                         'ns': [
+                             {'id': 0, 'flts': [{'k': 'water', 'v': 'river', 'op': '=', 'n': 'riverbank'}], 't': 'nwr'},
+                             {'id': 1, 'flts': [{'k': 'office', 'v': 'ngo', 'op': '=', 'n': 'office of a ngo'}],
+                              't': 'nwr'},
+                             {'id': 2, 'flts': [{'k': 'building', 'v': 'monastery', 'op': '=', 'n': 'abbey'}],
+                              't': 'nwr'}],
+                         'es': [{'src': 0, 'tgt': 1, 't': 'dist', 'dist': '723 mm'},
+                                {'src': 1, 'tgt': 2, 't': 'dist', 'dist': '787 le'}]}]
+
+        write_output(test_samples, 'datageneration/tests/data/tmp_output.jsonl')
+
+        tmp_file = 'datageneration/tests/data/tmp_output.jsonl'
+
+        with open(tmp_file, 'r') as json_file:
+            predicted_results = list(json_file)
+
+        with open('datageneration/tests/data/test_output.jsonl', 'r') as json_file:
+            expected_results = list(json_file)
+
+        for predicted_result, expected_result in zip(predicted_results, expected_results):
+            assert json.loads(predicted_result) == json.loads(expected_result)
+
+        os.remove(tmp_file)
 
     def test_area_generate(self):
         trials = 100

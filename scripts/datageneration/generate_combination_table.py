@@ -1,6 +1,7 @@
 import json
 import random
 from argparse import ArgumentParser
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -259,9 +260,6 @@ class QueryCombinationGenerator(object):
             drawn_descriptors = [self.core_tags[draft_index]['descriptors'] for draft_index in draft_indices]
             # drawn_tags = np.asarray(self.tag_lists)[draft_indices].tolist()
 
-            print("drawn indices")
-            print(draft_indices)
-
             drawn_tags = [pick_tag(self.core_tags[draft_index]['tags']) for draft_index in draft_indices]
 
             # drawn_tags = np.random.choice(tag_list, num_tags, replace=False).tolist()
@@ -337,10 +335,10 @@ class QueryCombinationGenerator(object):
                 use_combs = np.random.choice([True, False], p=[comb_chance, 1 - comb_chance])
 
                 if use_combs:
-                    combs = list(set(self.get_combs(drawn_idx, comb_chance, max_number_combs)))
+                    combs = list(set(self.get_combs(drawn_idx=drawn_idx, max_number_combs=max_number_combs)))
                     if len(combs) > 0:
                         for comb_id, comb in enumerate(combs):
-                            row = self.tag_df.loc[int(comb)]
+                            row = self.all_tags[int(comb)]
                             row_tag = pick_tag(row['tags'])
                             row_key = row_tag.split("=")[0]
                             row_val = row_tag.split("=")[1]
@@ -363,13 +361,15 @@ class QueryCombinationGenerator(object):
 
                             elif len(comb_tag.split("=")[1]) == 0:
                                 arb_vals = \
-                                    self.arbitrary_value_df.loc[self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
+                                    self.arbitrary_value_df.loc[
+                                        self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
                                         "value_list"].iloc[0].split("|")
                                 drawn_val = np.random.choice(arb_vals, 1)[0]
                                 if comb_tag.split("=")[0] in ["name", "addr:street"]:
                                     if len(drawn_val) <= 1:
                                         version = "equals"
                                     else:
+                                        # ipek - what is the logic behind this?
                                         # version = np.random.choice(["begins", "ends", "contains", "equals"], 1)[0]
                                         version = np.random.choice(["contains", "equals"], 1)[
                                             0]  # Randomly select one of these variants and format the string + regex accordingly
@@ -422,7 +422,7 @@ class QueryCombinationGenerator(object):
 
         return countries, states, cities
 
-    def run(self, area_chance, output_filename, num_queries, save_json=False):
+    def run(self, area_chance, num_queries):
         '''
         A method that generates random query combinations and optionally saves them to a JSON file.
         It gets a list of random tag combinations and adds additional information that is required to generate
@@ -447,13 +447,11 @@ class QueryCombinationGenerator(object):
 
         json_list = []
 
-        table_row = 0
+        # ipek- we don't need this anymore
+        # table_row = 0
 
         for obj_dicts in tqdm(self.generate_random_tag_combinations(num_queries), total=num_queries):
             tag_combinations = [x["props"] for x in obj_dicts]
-
-            print(tag_combinations)
-
             # ipek - i capsulate the area generation as function
             area_item = self.generate_area(area_chance)
 
@@ -493,14 +491,15 @@ class QueryCombinationGenerator(object):
             nodes = [area_item, obj_dicts]
 
             json_dict = {"nodes": nodes, "relations": edges, "action": action}
-            table_row += 1
+
+            # ipek- we don't need this anymore
+            # table_row += 1
 
             nf = translate_to_new_format(json_dict)
             json_list.append(nf)
-            print(nf)
 
             # print(json.dumps(json_dict, indent=4, cls=NpEncoder))
-        # ipek - I commented the following text
+        # ipek - I commented the following text, and move into the main to avoid multiple params in the function
         # if save_json:
         #     with open(output_filename + "_" + version + ".json", "w") as jsonfile:
         #         json.dump(json_list, jsonfile, cls=NpEncoder)
@@ -530,6 +529,26 @@ class QueryCombinationGenerator(object):
         return dict(val=area_val, type=drawn_area)
 
 
+def write_output(generated_combs, output_file):
+    # ipek - output should be jsonl
+
+    with open(output_file, "w") as out_file:
+        for generated_comb in generated_combs:
+            json.dump(generated_comb, out_file)
+            out_file.write('\n')
+
+        # if save_json:
+        #     with open(output_filename + "_" + version + ".json", "w") as jsonfile:
+        #         json.dump(json_list, jsonfile, cls=NpEncoder)
+        #     print("Saved file to output path!")
+        #
+        #     with open(output_filename + "_" + version + ".csv", 'w', newline='') as csvfile:
+        #         csv_writer = csv.writer(csvfile)
+        #         for item in json_list:
+        #             csv_writer.writerow([item])
+        #
+
+
 if __name__ == '__main__':
     '''
     Define paths and run all desired functions.
@@ -538,14 +557,15 @@ if __name__ == '__main__':
     parser.add_argument('--geolocations_file_path', help='Path to a file containing cities, countries, etc.')
     parser.add_argument('--tag_list_path', help='tag list file generated via retrieve_combinations')
     parser.add_argument('--arbitrary_value_list_path', help='Arbitrary value list generated via combinations')
-    parser.add_argument('--output_filename', help='File to save the output')
+    parser.add_argument('--output_folder', help='Folder to save the output')
+    parser.add_argument('--write_output', action='store_true')
     parser.add_argument('--area_chance', help='Add to probability of picking real area', type=float)
 
     args = parser.parse_args()
 
     tag_list_path = args.tag_list_path
     arbitrary_value_list_path = args.arbitrary_value_list_path
-    output_filename = args.output_filename = args.output_filename
+    output_folder = args.output_filename = args.output_folder
     geolocations_file_path = args.geolocations_file_path
 
     query_comb_generator = QueryCombinationGenerator(geolocations_file_path=geolocations_file_path,
@@ -553,12 +573,14 @@ if __name__ == '__main__':
                                                      arbitrary_value_list_path=arbitrary_value_list_path)
     area_chance = args.area_chance
     num_queries = 100
-    comb_df = query_comb_generator.run(area_chance=area_chance, output_filename=output_filename,
-                                       num_queries=num_queries, save_json=True)
+    generated_combs = query_comb_generator.run(area_chance=area_chance,
+                                               num_queries=num_queries)
 
-    # ipek - output should be jsonl
+    output_folder = Path(args.output_folder)
+    output_folder.mkdir(parents=True, exist_ok=True)
 
-    print(comb_df)
+    if args.write_output:
+        write_output(generated_combs, output_file=output_folder / 'test.jsonl')
 
     # # Example input dictionary
     # json_dict = {
