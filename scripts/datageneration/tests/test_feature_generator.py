@@ -1,7 +1,7 @@
 import unittest
-import numpy as np
-from pytest import approx
+
 from datageneration.generate_combination_table import QueryCombinationGenerator
+from pytest import approx
 
 '''
 Execute it as follows: python -m datageneration.tests.test_retrieve_combination
@@ -18,6 +18,13 @@ class TestGenerateCombination(unittest.TestCase):
                                                               tag_list_path=tag_list_path,
                                                               arbitrary_value_list_path=arbitrary_value_list_path)
 
+    def test_generate_random_tag_combinations(self):
+        num_queries = 20
+        generated_tag_combs = self.query_comb_generator.generate_random_tag_combinations(num_queries)
+
+        for comb in generated_tag_combs:
+            print(comb)
+
     def test_area_generate(self):
         trials = 100
         bbox_count = 0
@@ -25,13 +32,13 @@ class TestGenerateCombination(unittest.TestCase):
         area_chance = 0.9
         for i in range(trials):
             result = self.query_comb_generator.generate_area(area_chance=area_chance)
-            if len(result['val']) ==0:
-                bbox_count+=1
+            if len(result['val']) == 0:
+                bbox_count += 1
             else:
-                area_count+=1
-        assert area_count/100 == approx(area_chance, rel=0.5)
+                area_count += 1
+        assert area_count / 100 == approx(area_chance, rel=0.5)
 
-    def test_query_comb_generator(self):
+    def test_query_comb_drawn(self):
 
         drawn_idx = self.query_comb_generator.desriptors_to_idx['restaurant']
         must_word = 'cuisine'

@@ -144,8 +144,8 @@ class QueryCombinationGenerator(object):
         # ipek - changed it as follows
 
         # todo: find a better name
-        self.descriptor_list = {}
-        self.tag_lists = {}
+        # self.descriptor_list = {}
+        # self.tag_lists = {}
 
         # for idx, row in self.tag_df[self.tag_df['type'] == 'core'].iterrows():
         #     self.descriptor_list[row['index']] = row['descriptors']
@@ -156,13 +156,18 @@ class QueryCombinationGenerator(object):
 
         descriptors_to_idx = {}
         all_tags = {}
+        core_tags = {}
         for tag in tag_df.to_dict(orient='records'):
             all_tags[int(tag['index'])] = tag
             descriptors = tag['descriptors'].split('|')
 
+            if tag['type'] == 'core':
+                core_tags[int(tag['index'])] = tag
+
             for descriptor in descriptors:
                 descriptors_to_idx[descriptor.strip()] = int(tag['index'])
 
+        self.core_tags = core_tags
         self.desriptors_to_idx = descriptors_to_idx
         self.all_tags = all_tags
         self.numeric_list = [num.split("=")[0] + "=" for num in tag_df['tags'].tolist() if "***numeric***" in num]
@@ -239,7 +244,8 @@ class QueryCombinationGenerator(object):
         # highway_list = ["highway=road", "highway=motorway", "highway=primary", "highway=trunk_link", "highway=path",
         #                 "highway=motorway_link", "highway=residential"]
         # "amenity=restaurant"
-        highway_list = ["444", "445", "450", "452", "459", "460", "2450"]
+        # comment out
+        # highway_list = ["444", "445", "450", "452", "459", "460", "2450"]
 
         for query in range(num_queries):
             num_tags = np.random.choice(np.arange(max_number_tags_per_query), 1, p=weights)[
@@ -247,29 +253,32 @@ class QueryCombinationGenerator(object):
 
             # ipek - I changed from len(self.tag_lists) to list of indices
             # draft_indices = np.random.choice(np.arange(len(self.tag_lists)), num_tags, replace=False)
-            draft_indices = np.random.choice(np.asarray(list(self.tag_lists.keys())), num_tags, replace=False)
+            draft_indices = np.random.choice(np.asarray(list(self.core_tags.keys())), num_tags, replace=False)
 
             # drawn_descriptors = np.asarray(self.descriptor_list)[draft_idx].tolist()
-            drawn_descriptors = [self.descriptor_list[draft_index] for draft_index in draft_indices]
+            drawn_descriptors = [self.core_tags[draft_index]['descriptors'] for draft_index in draft_indices]
             # drawn_tags = np.asarray(self.tag_lists)[draft_indices].tolist()
+
+            print("drawn indices")
+            print(draft_indices)
 
             drawn_tags = [pick_tag(self.tag_lists[draft_index]) for draft_index in draft_indices]
 
             # drawn_tags = np.random.choice(tag_list, num_tags, replace=False).tolist()
 
-            # ipek - unclear for me
-            if num_tags < max_number_tags_per_query:
-                increased_rate_chance = 0.15
-                if np.random.choice([True, False], p=[increased_rate_chance, 1 - increased_rate_chance]):
-                    # why do we pick 34?
-                    additional_idx = np.random.choice(["34", np.random.choice(highway_list)])
-                    additional_tag = pick_tag(self.tag_df.loc[int(additional_idx)]['tags'])
-                    # additional_key = additional_tag.split("=")[0]
-                    # additional_value = additional_tag.split("=")[1]
-                    additional_descriptor = self.tag_df.loc[int(additional_idx)]['descriptors']
-                    num_tags += 1
-                    drawn_tags.append(additional_tag)
-                    drawn_descriptors.append(additional_descriptor)
+            # ipek - unclear for me -- commented out
+            # if num_tags < max_number_tags_per_query:
+            #     increased_rate_chance = 0.15
+            #     if np.random.choice([True, False], p=[increased_rate_chance, 1 - increased_rate_chance]):
+            #         # why do we pick 34?
+            #         additional_idx = np.random.choice(["34", np.random.choice(highway_list)])
+            #         additional_tag = pick_tag(self.tag_df.loc[int(additional_idx)]['tags'])
+            #         # additional_key = additional_tag.split("=")[0]
+            #         # additional_value = additional_tag.split("=")[1]
+            #         additional_descriptor = self.tag_df.loc[int(additional_idx)]['descriptors']
+            #         num_tags += 1
+            #         drawn_tags.append(additional_tag)
+            #         drawn_descriptors.append(additional_descriptor)
 
             # ipek what is obj_dicts?
             obj_dicts = []
