@@ -1,13 +1,14 @@
 import copy
+import itertools
 import json
 import os
+import random
 from argparse import ArgumentParser
 
-import backoff
 import numpy as np
 import openai
 import pandas as pd
-from datageneration.generate_combination_table import NpEncoder
+from datageneration.utils import write_output
 
 # In order to generate the natural language sentences, a valid OpenAI API key is required
 openai_info_path = "data/openai_info.json"
@@ -42,7 +43,8 @@ def remove_surrounding_double_quotes(text):
 
 
 class GPTDataGenerator:
-    def __init__(self, tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path):
+    def __init__(self, tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
+                 styles_path):
         _rel_spatial_terms = pd.read_csv(relative_spatial_terms_path).to_dict(orient='records')
 
         rel_spatial_terms = {}
@@ -50,6 +52,14 @@ class GPTDataGenerator:
             for rsd in row['Vals'].split(','):
                 rel_spatial_terms[rsd.strip()] = row['Dist']
         self.rel_spatial_terms = rel_spatial_terms
+        self.rel_spatial_terms_as_words = list(self.rel_spatial_terms.keys())
+
+        with open(persona_path, 'r') as f:
+            personas = f.readlines()
+            self.personas = list(map(lambda x: x.strip(), personas))
+        with open(styles_path, 'r') as f:
+            styles = f.readlines()
+            self.styles = list(map(lambda x: x.strip(), styles))
 
     def generate_prompt(self, comb, persona, style):
         '''
@@ -146,8 +156,10 @@ class GPTDataGenerator:
                 rst_chance = 0.4
                 use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
                 if use_relative_spatial_terms:
-                    rs_term = np.random.choice(__builtins__.list(self.rel_spatial_terms.keys()), 1)[0]
-
+                    # ipek - i changed the following line
+                    # rs_term = np.random.choice(__builtins__.list(self.rel_spatial_terms.keys()), 1)[0]
+                    random.shuffle(self.rel_spatial_terms_as_words)
+                    rs_term = random.choice(self.rel_spatial_terms_as_words)
                     core_edge += "Use this term to describe the spatial relation between Obj. " + str(
                         src) + " and " + str(
                         tgt) + " (similar to \"X is _ Y\"): " + rs_term + "\n"
@@ -171,94 +183,105 @@ class GPTDataGenerator:
 
         prompt = beginning + core
 
-
         # ipek - why do we change the comb content??
         return comb, prompt
 
-    def query(self, comb_list, output_filename, version="train", save_files=True):
+    def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
+        persona_style_ids = list(range(1, num_of_all_persona_style + 1))
+        num_tag_queries_ids = list(range(1, num_tag_queries + 1))
+
+        cycled_persona_style_ids = itertools.cycle(persona_style_ids)
+        persona_style_tag_pairs = [(x, next(cycled_persona_style_ids)) for x in num_tag_queries_ids]
+        return persona_style_tag_pairs
+
+    def run(self, tag_queries):
         '''
         A method that takes the intermediate query representation, and uses it to generate a natural language prompt for
         the GPT API. Different sentence structures are required for the different tasks, for the special tag "count",
         as well as for the different substring searches (beginning, ending, containing, equals).
 
-        :param dict comb_list: The dictionary containing all relevant information for the query
-        :param str output_filename: Name of the in- and output file (minus version specification)
-        :param bool save_files: Boolean determining whether the result should be saved as a file
+        :param dict tag_queries: The dictionary containing all relevant information for the query
         '''
-        db_df = pd.DataFrame(columns=['query', 'prompt', 'sentence'])
+        # db_df = pd.DataFrame(columns=['query', 'prompt', 'sentence'])
 
-        for id, comb in enumerate(comb_list):
-            # if id >= 50:
-            #     break
-            print("Generating ", id + 1, "/", len(comb_list))
-            comb, prompt = generate_prompt(comb)
+        # add style, persona generations
 
-            # @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
-            # def completions_with_backoff(**kwargs):
-            #     '''
-            #     Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
-            #     stop once the limit is reached, not saving any of the data generated until then. This method will wait
-            #     and then try again, hence preventing the error.
-            #
-            #     :param kwargs: List of arguments passed to the OpenAI API for completion.
-            #     '''
-            #     return openai.Completion.create(**kwargs)
-            #
-            # response = completions_with_backoff(
-            #     # model="text-davinci-003",
-            #     prompt=prompt,
-            #     temperature=0.9,
-            #     max_tokens=256,
-            #     top_p=1.0,
-            #     frequency_penalty=0.0,
-            #     presence_penalty=0.0,
-            #     # stop=["\n"]
-            #     )
-            # text = response['choices'][0]['text'].replace('\n', ' ').replace('\r', '').strip()
+        all_possible_persona_and_styles = list(itertools.product(self.personas, self.styles))
+        random.shuffle(all_possible_persona_and_styles)
+        num_tag_queries = len(tag_queries)
+        num_of_all_persona_style = len(all_possible_persona_and_styles)
 
-            @backoff.on_exception(backoff.expo, (
-                    openai.error.RateLimitError, openai.error.APIError, openai.error.APIConnectionError,
-                    openai.error.Timeout,
-                    openai.error.ServiceUnavailableError))
-            def chatcompletions_with_backoff(**kwargs):
-                '''
-                Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
-                stop once the limit is reached, not saving any of the data generated until then. This method will wait
-                and then try again, hence preventing the error.
+        self.assign_persona_styles_to_queries(num_of_all_persona_style, num_tag_queries)
 
-                :param kwargs: List of arguments passed to the OpenAI API for completion.
-                '''
-                return openai.ChatCompletion.create(**kwargs)
+        print(all_possible_persona_and_styles)
 
-            response = chatcompletions_with_backoff(
-                model="gpt-3.5-turbo",  # "gpt-4",
-                temperature=0.9,
-                max_tokens=1024,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
+        # for id, comb in enumerate(comb_list):
+        #     # if id >= 50:
+        #     #     break
+        #     print("Generating ", id + 1, "/", len(comb_list))
+        #     comb, prompt = generate_prompt(comb)
+        #
+        #     # @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
+        #     # def completions_with_backoff(**kwargs):
+        #     #     '''
+        #     #     Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
+        #     #     stop once the limit is reached, not saving any of the data generated until then. This method will wait
+        #     #     and then try again, hence preventing the error.
+        #     #
+        #     #     :param kwargs: List of arguments passed to the OpenAI API for completion.
+        #     #     '''
+        #     #     return openai.Completion.create(**kwargs)
+        #     #
+        #     # response = completions_with_backoff(
+        #     #     # model="text-davinci-003",
+        #     #     prompt=prompt,
+        #     #     temperature=0.9,
+        #     #     max_tokens=256,
+        #     #     top_p=1.0,
+        #     #     frequency_penalty=0.0,
+        #     #     presence_penalty=0.0,
+        #     #     # stop=["\n"]
+        #     #     )
+        #     # text = response['choices'][0]['text'].replace('\n', ' ').replace('\r', '').strip()
+        #
+        #     @backoff.on_exception(backoff.expo, (
+        #             openai.error.RateLimitError, openai.error.APIError, openai.error.APIConnectionError,
+        #             openai.error.Timeout,
+        #             openai.error.ServiceUnavailableError))
+        #     def chatcompletions_with_backoff(**kwargs):
+        #         '''
+        #         Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
+        #         stop once the limit is reached, not saving any of the data generated until then. This method will wait
+        #         and then try again, hence preventing the error.
+        #
+        #         :param kwargs: List of arguments passed to the OpenAI API for completion.
+        #         '''
+        #         return openai.ChatCompletion.create(**kwargs)
+        #
+        #     response = chatcompletions_with_backoff(
+        #         model="gpt-3.5-turbo",  # "gpt-4",
+        #         temperature=0.9,
+        #         max_tokens=1024,
+        #         messages=[
+        #             {"role": "user", "content": prompt}
+        #         ]
+        #     )
+        #
+        #     text = response['choices'][0]['message']['content'].replace('\r', '').strip()
+        #     comb_list[id]["text"] = remove_surrounding_double_quotes(text)
+        #     # text = ""
+        #
+        #     print(prompt)
+        #     # print(comb_list[id])
+        #     print(text)
+        #     print("*****")
+        #
+        #     db_df.loc[id] = [comb, prompt, text]
+        #
+        #     return generated_queries
 
-            text = response['choices'][0]['message']['content'].replace('\r', '').strip()
-            comb_list[id]["text"] = remove_surrounding_double_quotes(text)
-            # text = ""
 
-            print(prompt)
-            # print(comb_list[id])
-            print(text)
-            print("*****")
-
-            db_df.loc[id] = [comb, prompt, text]
-
-            # break
-
-            if save_files:
-                db_df.to_csv(output_filename + "_" + version + "_ChatNL.csv")
-                with open(output_filename + "_" + version + "_ChatNL.json", "w") as jsonfile:
-                    json.dump(comb_list, jsonfile, cls=NpEncoder)
-                print("Saved files to output path!")
-
-
+# ipek - i construct .env file storing the secret passwords
 # def dump_keys():
 #     '''
 #     Helper function to store the OpenAI API key and organisation parameters as a JSON file for future use.
@@ -278,27 +301,22 @@ if __name__ == '__main__':
     parser.add_argument('--tag_list_path', required=True)
     parser.add_argument('--arbitrary_value_list_path', required=True)
     parser.add_argument('--relative_spatial_terms_path', help='Path for the relative spats', required=True)
-    parser.add_argument('--query_file', required=True)
-    parser.add_argument('--output_folder', required=True)
+    parser.add_argument('--tag_query_file', required=True)
+    parser.add_argument('--output_file', required=True)
+    parser.add_argument('--persona_path', required=True)
+    parser.add_argument('--styles_path', required=True)
     args = parser.parse_args()
 
     tag_list_path = args.tag_list_path
     arbitrary_value_list_path = args.arbitrary_value_list_path
-    query_folder = args.query_folder
-    output_folder = args.output_folder
+    output_file = args.output_file
     relative_spatial_terms_path = args.relative_spatial_terms_path
+    persona_path = args.persona_path
+    styles_path = args.styles_path
+    tag_query_file = args.tag_query_file
 
-    gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path)
-
-    gen.run()
-
-    #
-    # for version in ["train", "dev", "test"]:
-    #     json_filename = query_file + "_" + version + ".json"
-    #     if os.path.isfile(json_filename):
-    #         with open(json_filename, "r") as jsonfile:
-    #             comb_list = json.load(jsonfile)
-    #     else:
-    #         comb_list = generate_query_combinations(tag_list_path, arbitrary_value_list_path, output_filename, True)
-    #
-    #     query(comb_list, output_filename, relspat, version, True)
+    gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
+                           styles_path)
+    tag_combinations = pd.read_json(tag_query_file, lines=True)
+    generated_queries = gen.run(tag_combinations)
+    write_output(generated_queries, output_file)

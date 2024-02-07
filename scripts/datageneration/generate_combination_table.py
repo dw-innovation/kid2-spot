@@ -586,9 +586,6 @@ if __name__ == '__main__':
     parser.add_argument('--area_chance', help='Add to probability of picking real area', type=float)
     parser.add_argument('--samples', help='Number of the samples to generate', type=int)
     parser.add_argument('--max_number_tags_per_query', type=int)
-    # parser.add_argument('--training_samples', help='number of samples to generate as a training set', type=int)
-    # parser.add_argument('--development_samples', help='number of samples to generate as a development set', type=int)
-    # parser.add_argument('--testing_samples', help='number of samples to generate as a test set', type=int)
 
     args = parser.parse_args()
 
