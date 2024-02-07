@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import os
 import numpy as np
 import pandas as pd
@@ -236,7 +237,13 @@ if __name__ == '__main__':
     '''
     Define paths and run all desired functions.
     '''
-    # dump_keys()
+    parser = ArgumentParser()
+    parser.add_argument('--source', help='domain-specific primary keys', required=True)
+    parser.add_argument('--tag_list', help='Path to save the tag list', required=True)
+    parser.add_argument('--num_examples', help='Enter the number of examples to be fetched by taginfo', default=50)
+    parser.add_argument('--arbitrary_value_list', help='Path to save the tag list', required=True)
+
+    args = parser.parse_args()
 
     tag_list_path = "data/Tag_List_v9.csv"
     arbitrary_value_list_path = "data/Arbitrary_Value_List_v9.csv"

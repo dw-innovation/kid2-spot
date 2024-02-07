@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+# ipek - my suggestion is to generate 100 samples for each tags and then split this dataset into training/test/validation
 
 def extract_variables(input_string):
     try:
