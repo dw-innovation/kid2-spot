@@ -6,4 +6,5 @@ requests==2.31.0
 openpyxl==3.1.2
 pytest==8.0.0
 backoff==2.2.1
-openai==0.29
+openai==1.11.1
+python_dotenv==1.0.1

@@ -56,7 +56,5 @@ class TestGPTGenerator(unittest.TestCase):
         assert len(predicted_persona_style_ids) == 3
 
 
-
-
 if __name__ == '__main__':
     unittest.main()

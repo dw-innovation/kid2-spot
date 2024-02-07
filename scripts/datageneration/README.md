@@ -11,6 +11,13 @@ containing definitions of relative spatial terms
 *relative_spatial_terms.csv* and a list of all countries, states and 
 cities in the world *countries+states+cities.json*.
 
+### Setup
+
+Install the required libraries:
+```shell
+pip install -r requirements.txt
+```
+
 Here is a short description of all scripts in order of execution.
 
 ### 1) retrieve_combinations.py
@@ -31,14 +38,26 @@ following information:
 - List of objects with natural language descriptors and one or more assigned tags
 - Relations / distances between the tags
 
+```shell
+scripts/scripts/generate_combinations.sh
+```
+
 ### 3) gpt_data_generator.py
 
 Use the random draft info to build a GPT prompt and generate an artificial
 natural sentence simulating a user.
 
-To execute this script, an additional file *data/openai_info.json* is required. It must contain the following contents:
-```json
-{"openai.organization": "YOUR-ORG", "openai.api_key": "YOUR-API-KEY"}
+To execute this script, an additional file *.env* is required. It must contain the following contents:
+```yaml
+TEMPERATURE=0.9
+MODEL=gpt-3.5-turbo
+MAX_TOKENS=1024
+OPENAI_API_KEY={OPENAI_API_KEY}
+OPENAI_ORG=={OPENAI_ORG}
+```
+
+```shell
+scripts/scripts/generate_samples_with_gpt.sh
 ```
 
 ### 4) tags_to_imr.py

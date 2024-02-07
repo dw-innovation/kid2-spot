@@ -5,27 +5,71 @@ import os
 import random
 from argparse import ArgumentParser
 
+import backoff
 import numpy as np
 import openai
 import pandas as pd
 from datageneration.utils import write_output
+from dotenv import load_dotenv
+from openai import OpenAI
+from tqdm import tqdm
 
-# In order to generate the natural language sentences, a valid OpenAI API key is required
-openai_info_path = "data/openai_info.json"
-if os.path.isfile(openai_info_path):
-    with open(openai_info_path, "r") as jsonfile:
-        openai_info = json.load(jsonfile)
-        openai.organization = openai_info["openai.organization"]
-        openai.api_key = openai_info["openai.api_key"]
-else:
-    print(
-        "No JSON file containing OpenAI keys was found. Please provide file or enter info manually to use the OpenAI API.")
-    openai.organization = ""
-    openai.api_key = ""
-    # openai.api_key = os.getenv("OPENAI_API_KEY")
+load_dotenv()
 
 
-# list = openai.Model.list()
+# ipek - usage of .env is more popular, so I added the secret values there
+# # In order to generate the natural language sentences, a valid OpenAI API key is required
+# openai_info_path = "data/openai_info.json"
+# if os.path.isfile(openai_info_path):
+#     with open(openai_info_path, "r") as jsonfile:
+#         openai_info = json.load(jsonfile)
+#         openai.organization = openai_info["openai.organization"]
+#         openai.api_key = openai_info["openai.api_key"]
+# else:
+#     print(
+#         "No JSON file containing OpenAI keys was found. Please provide file or enter info manually to use the OpenAI API.")
+#     openai.organization = ""
+#     openai.api_key = ""
+#     # openai.api_key = os.getenv("OPENAI_API_KEY")
+
+
+# ipek- I placed the openai related funcs here
+@backoff.on_exception(backoff.expo, (
+        openai.RateLimitError, openai.APIError, openai.APIConnectionError,
+        openai.Timeout))
+def chatcompletions_with_backoff(**kwargs):
+    '''
+    Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
+    stop once the limit is reached, not saving any of the data generated until then. This method will wait
+    and then try again, hence preventing the error.
+
+    :param kwargs: List of arguments passed to the OpenAI API for completion.
+    '''
+    return CLIENT.chat.completions.create(**kwargs)
+
+
+# OpenAI parameters
+MODEL = os.getenv('MODEL')
+TEMPERATURE = float(os.getenv('TEMPERATURE'))
+MAX_TOKENS = int(os.getenv('MAX_TOKENS'))
+
+CLIENT = OpenAI(
+    api_key=os.environ["OPENAI_API_KEY"], organization=os.environ["OPENAI_ORG"]
+)
+
+
+def request_openai(prompt):
+    response = chatcompletions_with_backoff(
+        model=MODEL,  # "gpt-4",
+        temperature=TEMPERATURE,
+        max_tokens=MAX_TOKENS,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+
+    text = response.choices[0].message.content
+    return text
 
 
 def is_number(s):
@@ -42,6 +86,14 @@ def remove_surrounding_double_quotes(text):
     return text
 
 
+def post_processing(text):
+    text = text.replace('\r', '').strip()
+    text = text.replace("User:", "")
+    text = remove_surrounding_double_quotes(text)
+    return text
+
+
+# ipek - the code editor says tag_list_path, arbitrary_value_list_path are not used. I think also that it is logical. Neverthless could you validate it again?
 class GPTDataGenerator:
     def __init__(self, tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
                  styles_path):
@@ -187,8 +239,8 @@ class GPTDataGenerator:
         return comb, prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
-        persona_style_ids = list(range(1, num_of_all_persona_style + 1))
-        num_tag_queries_ids = list(range(1, num_tag_queries + 1))
+        persona_style_ids = list(range(num_of_all_persona_style))
+        num_tag_queries_ids = list(range(num_tag_queries))
 
         cycled_persona_style_ids = itertools.cycle(persona_style_ids)
         persona_style_tag_pairs = [(x, next(cycled_persona_style_ids)) for x in num_tag_queries_ids]
@@ -202,96 +254,26 @@ class GPTDataGenerator:
 
         :param dict tag_queries: The dictionary containing all relevant information for the query
         '''
-        # db_df = pd.DataFrame(columns=['query', 'prompt', 'sentence'])
-
-        # add style, persona generations
-
         all_possible_persona_and_styles = list(itertools.product(self.personas, self.styles))
         random.shuffle(all_possible_persona_and_styles)
         num_tag_queries = len(tag_queries)
         num_of_all_persona_style = len(all_possible_persona_and_styles)
+        persona_style_tag_pairs = self.assign_persona_styles_to_queries(num_of_all_persona_style, num_tag_queries)
 
-        self.assign_persona_styles_to_queries(num_of_all_persona_style, num_tag_queries)
+        results = []
+        for tag_id, persona_style_pair in tqdm(persona_style_tag_pairs, total=num_tag_queries):
+            persona, style = all_possible_persona_and_styles[persona_style_pair]
+            comb = tag_queries[tag_id]
+            comb, prompt = self.generate_prompt(comb, persona, style)
 
-        print(all_possible_persona_and_styles)
+            generated_sentence = request_openai(prompt=prompt)
+            post_processed_generated_sentence = post_processing(generated_sentence)
+            results.append(
+                {'query': comb, 'prompt': prompt, 'style': style, 'persona': persona,
+                 'model_output': generated_sentence, 'text': post_processed_generated_sentence})
 
-        # for id, comb in enumerate(comb_list):
-        #     # if id >= 50:
-        #     #     break
-        #     print("Generating ", id + 1, "/", len(comb_list))
-        #     comb, prompt = generate_prompt(comb)
-        #
-        #     # @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
-        #     # def completions_with_backoff(**kwargs):
-        #     #     '''
-        #     #     Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
-        #     #     stop once the limit is reached, not saving any of the data generated until then. This method will wait
-        #     #     and then try again, hence preventing the error.
-        #     #
-        #     #     :param kwargs: List of arguments passed to the OpenAI API for completion.
-        #     #     '''
-        #     #     return openai.Completion.create(**kwargs)
-        #     #
-        #     # response = completions_with_backoff(
-        #     #     # model="text-davinci-003",
-        #     #     prompt=prompt,
-        #     #     temperature=0.9,
-        #     #     max_tokens=256,
-        #     #     top_p=1.0,
-        #     #     frequency_penalty=0.0,
-        #     #     presence_penalty=0.0,
-        #     #     # stop=["\n"]
-        #     #     )
-        #     # text = response['choices'][0]['text'].replace('\n', ' ').replace('\r', '').strip()
-        #
-        #     @backoff.on_exception(backoff.expo, (
-        #             openai.error.RateLimitError, openai.error.APIError, openai.error.APIConnectionError,
-        #             openai.error.Timeout,
-        #             openai.error.ServiceUnavailableError))
-        #     def chatcompletions_with_backoff(**kwargs):
-        #         '''
-        #         Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
-        #         stop once the limit is reached, not saving any of the data generated until then. This method will wait
-        #         and then try again, hence preventing the error.
-        #
-        #         :param kwargs: List of arguments passed to the OpenAI API for completion.
-        #         '''
-        #         return openai.ChatCompletion.create(**kwargs)
-        #
-        #     response = chatcompletions_with_backoff(
-        #         model="gpt-3.5-turbo",  # "gpt-4",
-        #         temperature=0.9,
-        #         max_tokens=1024,
-        #         messages=[
-        #             {"role": "user", "content": prompt}
-        #         ]
-        #     )
-        #
-        #     text = response['choices'][0]['message']['content'].replace('\r', '').strip()
-        #     comb_list[id]["text"] = remove_surrounding_double_quotes(text)
-        #     # text = ""
-        #
-        #     print(prompt)
-        #     # print(comb_list[id])
-        #     print(text)
-        #     print("*****")
-        #
-        #     db_df.loc[id] = [comb, prompt, text]
-        #
-        #     return generated_queries
+        return results
 
-
-# ipek - i construct .env file storing the secret passwords
-# def dump_keys():
-#     '''
-#     Helper function to store the OpenAI API key and organisation parameters as a JSON file for future use.
-#     '''
-#     team = {}
-#     team['openai.organization'] = "YOUR_ORG_HERE"
-#     team['openai.api_key'] = "YOUR_KEY_HERE"
-#
-#     with open('data/openai_info.json', 'w') as f:
-#         json.dump(team, f)
 
 if __name__ == '__main__':
     '''
@@ -317,6 +299,9 @@ if __name__ == '__main__':
 
     gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
                            styles_path)
-    tag_combinations = pd.read_json(tag_query_file, lines=True)
-    generated_queries = gen.run(tag_combinations)
+
+    with open(tag_query_file, "r") as f:
+        tag_combinations = [json.loads(each_line) for each_line in f]
+
+    generated_queries = gen.run(tag_combinations[:5])
     write_output(generated_queries, output_file)
