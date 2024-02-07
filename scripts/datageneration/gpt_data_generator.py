@@ -51,7 +51,7 @@ class GPTDataGenerator:
                 rel_spatial_terms[rsd.strip()] = row['Dist']
         self.rel_spatial_terms = rel_spatial_terms
 
-    def generate_prompt(self, comb):
+    def generate_prompt(self, comb, persona, style):
         '''
         A method that takes the intermediate query representation, and uses it to generate a natural language prompt for
         the GPT API. Different sentence structures are required for the different tasks, for the special tag "count",
@@ -63,13 +63,25 @@ class GPTDataGenerator:
         objects = comb["ns"]
         distances = comb["es"]
 
-        beginning = ("Return a sentence simulating a user using a natural language interface to search for specific "
-                     "geographic locations. Do not affirm this request and return nothing but the answers. \n"
-                     "Instructions for the style of the query: ")
+        # personas = ["political journalist", "investigative journalist", "expert fact checker", "hobby fact checker",
+        #             "human rights abuse monitoring OSINT Expert", "OSINT beginner", "legal professional"]
+        # persona = np.random.choice(personas)
+        # styles = ["in perfect grammar and clear wording", "sloppy and quick, with spelling mistakes",
+        #           "in simple language",
+        #           "like someone in a hurry", "with very precise wording, short, to the point",
+        #           "with very elaborate wording",
+        #           "as a chain of thoughts split into multiple sentences"]
+        # style = np.random.choice(styles)
 
-        style = np.random.choice(["concise or list-style", "well-phrased"], p=[0.5, 0.5])
-        style = style + np.random.choice([", random typos and grammar mistakes", ""], p=[0.25, 0.75])
-        style = style + np.random.choice([", all in one sentence", ", split into multiple sentences"], p=[0.65, 0.35])
+        beginning = (
+                "Act as a " + persona + ": Return a sentence simulating a user using a natural language interface to "
+                                        "search for specific geographic locations. Do not affirm this request and return nothing but the "
+                                        "answers. \nWrite the search request " + style + ".")
+
+        # ipek- I commented out the below code, validate it
+        # style = np.random.choice(["concise or list-style", "well-phrased"], p=[0.5, 0.5])
+        # style = style + np.random.choice([", random typos and grammar mistakes", ""], p=[0.25, 0.75])
+        # style = style + np.random.choice([", all in one sentence", ", split into multiple sentences"], p=[0.65, 0.35])
 
         query_phrasing = np.random.choice([0, 1], p=[0.65, 0.35])
         if query_phrasing == 0:
@@ -159,6 +171,8 @@ class GPTDataGenerator:
 
         prompt = beginning + core
 
+
+        # ipek - why do we change the comb content??
         return comb, prompt
 
     def query(self, comb_list, output_filename, version="train", save_files=True):
@@ -177,7 +191,7 @@ class GPTDataGenerator:
             # if id >= 50:
             #     break
             print("Generating ", id + 1, "/", len(comb_list))
-            comb, prompt = generate_prompt(comb, relspat)
+            comb, prompt = generate_prompt(comb)
 
             # @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
             # def completions_with_backoff(**kwargs):
@@ -264,7 +278,7 @@ if __name__ == '__main__':
     parser.add_argument('--tag_list_path', required=True)
     parser.add_argument('--arbitrary_value_list_path', required=True)
     parser.add_argument('--relative_spatial_terms_path', help='Path for the relative spats', required=True)
-    parser.add_argument('--query_folder', required=True)
+    parser.add_argument('--query_file', required=True)
     parser.add_argument('--output_folder', required=True)
     args = parser.parse_args()
 
@@ -275,6 +289,8 @@ if __name__ == '__main__':
     relative_spatial_terms_path = args.relative_spatial_terms_path
 
     gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path)
+
+    gen.run()
 
     #
     # for version in ["train", "dev", "test"]:

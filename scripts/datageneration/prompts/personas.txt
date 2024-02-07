@@ -1,0 +1,2 @@
+        personas = ["political journalist", "investigative journalist", "expert fact checker", "hobby fact checker",
+                    "human rights abuse monitoring OSINT Expert", "OSINT beginner", "legal professional"]

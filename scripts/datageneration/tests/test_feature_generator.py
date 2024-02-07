@@ -6,7 +6,7 @@ from datageneration.generate_combination_table import QueryCombinationGenerator,
 from pytest import approx
 
 '''
-Execute it as follows: python -m datageneration.tests.test_retrieve_combination
+Execute it as follows: python -m datageneration.tests.test_feature_generator
 '''
 
 
