@@ -1,11 +1,11 @@
 import json
 import random
 from argparse import ArgumentParser
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
 
 # ipek - my suggestion is to generate 100 samples for each tags and then split this dataset into training/test/validation
 
@@ -134,13 +134,14 @@ def pick_tag(tag_list_string):
 
 
 class QueryCombinationGenerator(object):
-    def __init__(self, geolocations_file_path, tag_list_path, arbitrary_value_list_path):
+    def __init__(self, geolocations_file_path, tag_list_path, arbitrary_value_list_path, max_number_tags_per_query):
         countries, states, cities = self.fetch_countries_states_cities(geolocations_file_path)
 
         self.countries = countries
         self.states = states
         self.cities = cities
         self.arbitrary_value_df = pd.read_csv(arbitrary_value_list_path, dtype={'index': int})
+        self.max_number_tags_per_query = max_number_tags_per_query
 
         # Select type="core" as these are base categories (e.g. "house"), unlike attributes (e.g. "height")
 
@@ -174,6 +175,7 @@ class QueryCombinationGenerator(object):
                 descriptors_to_idx[descriptor.strip()] = int(tag['index'])
 
         self.core_tags = core_tags
+        self.core_tag_ids = list(core_tags.keys())
         self.desriptors_to_idx = descriptors_to_idx
         self.all_tags = all_tags
         self.numeric_list = [num.split("=")[0] + "=" for num in tag_df['tags'].tolist() if "***numeric***" in num]
@@ -225,7 +227,7 @@ class QueryCombinationGenerator(object):
         # ipek - I removed version and changed it to num_queries, because version was used as another variable in the code.
 
         # ipek - why didn't you make them parametric?
-        max_number_tags_per_query = 4  # The maximum number of objects that will be included in one query
+        # max_number_tags_per_query = 4  # The maximum number of objects that will be included in one query
 
         # ipek - i would add it as max_number of features
         max_number_combs = 4  # The maximum number of additional tags that will be added to one objects
@@ -260,7 +262,10 @@ class QueryCombinationGenerator(object):
 
             # ipek - I changed from len(self.tag_lists) to list of indices
             # draft_indices = np.random.choice(np.arange(len(self.tag_lists)), num_tags, replace=False)
-            draft_indices = np.random.choice(np.asarray(list(self.core_tags.keys())), num_tags, replace=False)
+            # draft_indices = np.random.choice(np.asarray(list(self.core_tags.keys())), num_tags, replace=False)
+
+            random.shuffle(self.core_tag_ids)
+            draft_indices = self.core_tag_ids[:random.randint(1, num_tags)]
 
             # drawn_descriptors = np.asarray(self.descriptor_list)[draft_idx].tolist()
             drawn_descriptors = [self.core_tags[draft_index]['descriptors'] for draft_index in draft_indices]
@@ -576,41 +581,35 @@ if __name__ == '__main__':
     parser.add_argument('--geolocations_file_path', help='Path to a file containing cities, countries, etc.')
     parser.add_argument('--tag_list_path', help='tag list file generated via retrieve_combinations')
     parser.add_argument('--arbitrary_value_list_path', help='Arbitrary value list generated via combinations')
-    parser.add_argument('--output_folder', help='Folder to save the output')
+    parser.add_argument('--output_file', help='File to save the output')
     parser.add_argument('--write_output', action='store_true')
     parser.add_argument('--area_chance', help='Add to probability of picking real area', type=float)
-    parser.add_argument('--training_samples', help='number of samples to generate as a training set', type=int)
-    parser.add_argument('--development_samples', help='number of samples to generate as a development set', type=int)
-    parser.add_argument('--testing_samples', help='number of samples to generate as a test set', type=int)
+    parser.add_argument('--samples', help='Number of the samples to generate', type=int)
+    parser.add_argument('--max_number_tags_per_query', type=int)
+    # parser.add_argument('--training_samples', help='number of samples to generate as a training set', type=int)
+    # parser.add_argument('--development_samples', help='number of samples to generate as a development set', type=int)
+    # parser.add_argument('--testing_samples', help='number of samples to generate as a test set', type=int)
 
     args = parser.parse_args()
 
     tag_list_path = args.tag_list_path
     arbitrary_value_list_path = args.arbitrary_value_list_path
-    output_folder = args.output_filename = args.output_folder
     geolocations_file_path = args.geolocations_file_path
+    area_chance = args.area_chance
+    num_samples = args.samples
+    output_file = args.output_file
+    max_number_tags_per_query = args.max_number_tags_per_query
 
     query_comb_generator = QueryCombinationGenerator(geolocations_file_path=geolocations_file_path,
                                                      tag_list_path=tag_list_path,
-                                                     arbitrary_value_list_path=arbitrary_value_list_path)
-    area_chance = args.area_chance
+                                                     arbitrary_value_list_path=arbitrary_value_list_path,
+                                                     max_number_tags_per_query=max_number_tags_per_query)
 
-    output_folder = Path(args.output_folder)
-    output_folder.mkdir(parents=True, exist_ok=True)
+    generated_combs = query_comb_generator.run(area_chance=area_chance,
+                                               num_queries=num_samples)
 
-    dataset_splits = {
-        'train': args.training_samples,
-        'development': args.development_samples,
-        'test': args.testing_samples
-    }
-
-    for ds_split, num_samples in dataset_splits.items():
-
-        generated_combs = query_comb_generator.run(area_chance=area_chance,
-                                                   num_queries=num_samples)
-
-        if args.write_output:
-            write_output(generated_combs, output_file=output_folder / f'{ds_split}.jsonl')
+    if args.write_output:
+        write_output(generated_combs, output_file=output_file)
 
     # # Example input dictionary
     # json_dict = {
