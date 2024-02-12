@@ -27,7 +27,7 @@ After editing the database file, run this script to fill in the column
 combinations found in the OSM taginfo database.
 
 ```shell
-scripts/retrieve_combinations.sh
+bash scripts/retrieve_combinations.sh
 ```
 
 ### 2) generate_combination_table.py
@@ -39,7 +39,7 @@ following information:
 - Relations / distances between the tags
 
 ```shell
-scripts/scripts/generate_combinations.sh
+bash scripts/generate_combinations.sh
 ```
 
 ### 3) gpt_data_generator.py
@@ -57,7 +57,7 @@ OPENAI_ORG=={OPENAI_ORG}
 ```
 
 ```shell
-scripts/scripts/generate_samples_with_gpt.sh
+bash scripts/generate_samples_with_gpt.sh
 ```
 
 ### 4) tags_to_imr.py
@@ -66,3 +66,7 @@ A file that takes the bundle list and transforms it to a version in
 which all tag bundles are represented in the graph database format 
 the model translates natural sentences into. This is required to be able
 to assign the correct tags to the descriptors detected by the model.
+
+```shell
+bash scripts/convert_tags_to_imr.sh
+```
