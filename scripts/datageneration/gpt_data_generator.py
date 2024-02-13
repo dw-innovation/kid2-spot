@@ -303,5 +303,5 @@ if __name__ == '__main__':
     with open(tag_query_file, "r") as f:
         tag_combinations = [json.loads(each_line) for each_line in f]
 
-    generated_queries = gen.run(tag_combinations[:5])
+    generated_queries = gen.run(tag_combinations)
     write_output(generated_queries, output_file)
