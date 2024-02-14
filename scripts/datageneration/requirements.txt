@@ -8,3 +8,5 @@ pytest==8.0.0
 backoff==2.2.1
 openai==1.11.1
 python_dotenv==1.0.1
+jsonlines==4.0.0
+pyyaml==6.0.1

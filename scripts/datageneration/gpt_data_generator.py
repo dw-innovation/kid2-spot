@@ -17,26 +17,56 @@ from tqdm import tqdm
 load_dotenv()
 
 
-# ipek - usage of .env is more popular, so I added the secret values there
-# # In order to generate the natural language sentences, a valid OpenAI API key is required
-# openai_info_path = "data/openai_info.json"
-# if os.path.isfile(openai_info_path):
-#     with open(openai_info_path, "r") as jsonfile:
-#         openai_info = json.load(jsonfile)
-#         openai.organization = openai_info["openai.organization"]
-#         openai.api_key = openai_info["openai.api_key"]
-# else:
-#     print(
-#         "No JSON file containing OpenAI keys was found. Please provide file or enter info manually to use the OpenAI API.")
-#     openai.organization = ""
-#     openai.api_key = ""
-#     # openai.api_key = os.getenv("OPENAI_API_KEY")
+# imports
+import random
+import time
+
+# define a retry decorator
+def retry_with_exponential_backoff(
+    func,
+    initial_delay: float = 1,
+    exponential_base: float = 2,
+    jitter: bool = True,
+    max_retries: int = 10,
+    errors: tuple = (openai.RateLimitError,),
+):
+    """Retry a function with exponential backoff."""
+
+    def wrapper(*args, **kwargs):
+        # Initialize variables
+        num_retries = 0
+        delay = initial_delay
+
+        # Loop until a successful response or max_retries is hit or an exception is raised
+        while True:
+            try:
+                return func(*args, **kwargs)
+
+            # Retry on specified errors
+            except errors as e:
+                # Increment retries
+                num_retries += 1
+
+                # Check if max retries has been reached
+                if num_retries > max_retries:
+                    raise Exception(
+                        f"Maximum number of retries ({max_retries}) exceeded."
+                    )
+
+                # Increment the delay
+                delay *= exponential_base * (1 + jitter * random.random())
+
+                # Sleep for the delay
+                time.sleep(delay)
+
+            # Raise exceptions for any errors not specified
+            except Exception as e:
+                raise e
+
+    return wrapper
 
 
-# ipek- I placed the openai related funcs here
-@backoff.on_exception(backoff.expo, (
-        openai.RateLimitError, openai.APIError, openai.APIConnectionError,
-        openai.Timeout))
+@retry_with_exponential_backoff
 def chatcompletions_with_backoff(**kwargs):
     '''
     Helper function to deal with the "openai.error.RateLimitError". If not used, the script will simply
@@ -73,6 +103,8 @@ def request_openai(prompt):
 
 
 def is_number(s):
+    if not s:
+        return False
     try:
         float(s)  # Try converting the string to a float
         return True
@@ -163,7 +195,9 @@ class GPTDataGenerator:
             for flt in object["flts"]:
                 if flts_counter > 0:
                     core = core + ", "
-                core = core + flt["n"]
+
+                if flt["n"]:
+                    core = core + flt["n"]
                 if flts_counter > 0:
                     if flt["op"] == "~":
                         regex_version = np.random.choice([0, 1, 2])
