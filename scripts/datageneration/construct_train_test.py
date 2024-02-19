@@ -82,11 +82,13 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--input_folder')
     parser.add_argument('--output_folder')
+    parser.add_argument('--dev_samples', type=int)
 
     args = parser.parse_args()
 
     input_folder = args.input_folder
     output_folder = Path(args.output_folder)
+    dev_samples = args.dev_samples
 
     samples_as_df = []
     for fname in Path(input_folder).rglob('*.jsonl'):
@@ -101,13 +103,12 @@ if __name__ == '__main__':
         samples_as_df.append(sample_df)
 
     samples_as_df = pd.concat(samples_as_df)
-    print(f"Number of validated samples: {len(samples_as_df)}")
 
-    development_set = samples_as_df.sample(100)
-
-    training_set = samples_as_df[samples_as_df['query'].isin(development_set['query'].tolist())]
+    development_set = samples_as_df.sample(dev_samples)
+    training_set = samples_as_df[~samples_as_df['query'].isin(development_set['query'].tolist())]
 
     print(f"Number of training set: {len(training_set)}")
+    print(f"Number of validated samples: {len(development_set)}")
 
     development_set.to_csv(output_folder / 'dev.tsv', sep="\t", index=False)
     training_set.to_csv(output_folder / 'train.tsv', sep="\t", index=False)
