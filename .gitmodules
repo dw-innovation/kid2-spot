@@ -10,3 +10,6 @@
 [submodule "apis/osmtagsearch"]
 	path = apis/osmtagsearch
 	url = https://github.com/dw-innovation/kid2-spot-osm-tag-search-api
+[submodule "apis/kid2-spot-central-nlp-api"]
+	path = apis/kid2-spot-central-nlp-api
+	url = https://github.com/dw-innovation/kid2-spot-central-nlp-api.git
