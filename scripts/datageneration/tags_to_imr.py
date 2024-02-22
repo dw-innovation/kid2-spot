@@ -46,6 +46,8 @@ def yield_tag_flts(tags, yield_final=True):
             yield generate_and_condition(flt_list)
         else:
             op = "="
+            if "~" in tag:
+                op = "~"
             if ">" in tag:
                 op = ">"
             elif "<" in tag:
