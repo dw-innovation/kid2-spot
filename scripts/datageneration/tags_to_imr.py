@@ -48,7 +48,7 @@ def yield_tag_flts(tags, yield_final=True):
             op = "="
             if "~" in tag:
                 op = "~"
-            if ">" in tag:
+            elif ">" in tag:
                 op = ">"
             elif "<" in tag:
                 op = "<"

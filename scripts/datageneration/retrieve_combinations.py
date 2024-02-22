@@ -146,7 +146,14 @@ class CombinationRetriever(object):
                 print(f"No assocated tags found for {row['descriptors']}")
                 continue
 
-            tag_key_value_pairs = list(map(lambda pair: (pair.split('=')[0], pair.split('=')[1]), associated_tags))
+            tag_key_value_pairs = []
+            for pair in associated_tags:
+                if '=' in pair:
+                    tag_key_value_pairs.append((pair.split('=')[0], pair.split('=')[1]))
+                elif '~' in pair:
+                    tag_key_value_pairs.append((pair.split('~')[0], pair.split('~')[1]))
+
+            # tag_key_value_pairs = list(map(lambda pair: (pair.split('=')[0], pair.split('=')[1]), associated_tags))
 
             if row['type'] == 'core':
                 for tag_key, tag_value in tag_key_value_pairs:
