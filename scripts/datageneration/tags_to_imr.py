@@ -21,7 +21,8 @@ def generate_and_condition(*conditions):
     # return {"and": cdt_list}
     if len(conditions) > 1:
         print("Error: length of contitions > 0, please check!")
-    return {"and": [list(c_) for c_ in conditions[0]]}
+    and_list = [list(c_) for c_ in conditions[0]]
+    return {"and": [l_[0] for l_ in and_list]}
 
 
 def generate_or_condition(*conditions):
