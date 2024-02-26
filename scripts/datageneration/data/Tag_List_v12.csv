@@ -6,7 +6,7 @@ index,descriptors,type,tags,combinations
 4.0,air tower|Aviation control tower|Air traffic control tower|ATCT|Control tower|navigationaid|Air traffic control center |ATCC|Flight tower|Air traffic management (ATM) tower|Air traffic control facility (ATCF)|Air traffic control station (ATCS)|Air traffic control unit (ATCU),core,aeroway=navigationaid,
 5.0,spaceport|airport for spacecrafts|spacecraft drome|cosmodrome|astro station|space airport|space dock|launching base,core,aeroway=spaceport,
 6.0,Wind meter|Air-sleeve|Wind vane|windsock|Wind flag|Weathercock|Air sock|Wind cone|Drogue|Wind sleeve|Wind direction indicator,core,aeroway=windsock,
-7.0,pub|bar|biergarten|beergarden|saloon|tavern|beer garden|watering hole|Inn|cocktail lounge|lounge|wine bar,core,"amenity=bar, amentiy=pub, amenity=biergarten",9|12|143|563|211
+7.0,pub|bar|biergarten|beergarden|saloon|tavern|beer garden|watering hole|Inn|cocktail lounge|lounge|wine bar,core,"amenity=bar, amenity=pub, amenity=biergarten",9|12|143|563|211
 8.0,outdoor seating|al fresco,core,leisure=outdoor_seating,
 9.0,cafe|coffeehouse|coffee shop|bistro|tearoom|lunchroom|coffee bar,core,"amenity=cafe, shop=coffee, cuisine=coffee_shop",9|11|143|563|211
 10.0,ice cream parlor|frozen yoghurt|ice cream shop|ice cream store|ice cream parlour|confectionery,core,"amenity=ice_cream, shop=ice_cream",9|12
@@ -210,7 +210,7 @@ index,descriptors,type,tags,combinations
 208.0,memorial|memorial site|memorial plaque|stolperstein|commemorative plaque|war memorial,core,historic=memorial,544|545|547|548|549|550|551|456|457|398|145|538|540|541|542|543
 209.0,monument|historic monument,core,historic=monument,398
 210.0,wreck|ship wreck,core,historic=wreck,
-211.0,shopping district|commercial|shopping area|shopping street|commercial area|retail district|retail building|commercial building,core,"landuse=commercial, landuse=retail, building=retail, building=commercial, building=retail",384|7|9|11|12|143|144|145|24|30|36|563|75|589|211|598|600|348|349|350|478|351|353|352|357|359|360|105|363|364|365|366|369|374
+211.0,shopping district|commercial|shopping area|shopping street|commercial area|retail district|retail building|commercial building,core,"landuse=commercial, landuse=retail, building=retail, building=commercial, building=retail",384|7|9|11|12|143|144|145|24|30|36|48|563|75|589|78|211|598|600|348|349|350|478|351|353|352|357|359|360|105|363|364|365|366|369|374
 212.0,construction site|construction area,core,"landuse=construction, landuse=brownfield, landuse=greenfield",225|283
 213.0,educational district,core,landuse=education,82|15|69|447
 214.0,industrial|Industrial area|factory district|manufacturing zone|industrial park|industrial building,core,"landuse=industrial, industrial=***any***, man_made=works, building=industrial",134|264|143|144|145|272|554|305|573|574|575|576|577|579|580|581|332|333|214|600|473|369|252
