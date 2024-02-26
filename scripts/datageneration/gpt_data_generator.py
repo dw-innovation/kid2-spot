@@ -2,10 +2,8 @@ import copy
 import itertools
 import json
 import os
-import random
 from argparse import ArgumentParser
 
-import backoff
 import numpy as np
 import openai
 import pandas as pd
@@ -16,19 +14,19 @@ from tqdm import tqdm
 
 load_dotenv()
 
-
 # imports
 import random
 import time
 
+
 # define a retry decorator
 def retry_with_exponential_backoff(
-    func,
-    initial_delay: float = 1,
-    exponential_base: float = 2,
-    jitter: bool = True,
-    max_retries: int = 10,
-    errors: tuple = (openai.RateLimitError,),
+        func,
+        initial_delay: float = 1,
+        exponential_base: float = 2,
+        jitter: bool = True,
+        max_retries: int = 10,
+        errors: tuple = (openai.RateLimitError,),
 ):
     """Retry a function with exponential backoff."""
 
@@ -157,25 +155,10 @@ class GPTDataGenerator:
         objects = comb["ns"]
         distances = comb["es"]
 
-        # personas = ["political journalist", "investigative journalist", "expert fact checker", "hobby fact checker",
-        #             "human rights abuse monitoring OSINT Expert", "OSINT beginner", "legal professional"]
-        # persona = np.random.choice(personas)
-        # styles = ["in perfect grammar and clear wording", "sloppy and quick, with spelling mistakes",
-        #           "in simple language",
-        #           "like someone in a hurry", "with very precise wording, short, to the point",
-        #           "with very elaborate wording",
-        #           "as a chain of thoughts split into multiple sentences"]
-        # style = np.random.choice(styles)
-
         beginning = (
                 "Act as a " + persona + ": Return a sentence simulating a user using a natural language interface to "
                                         "search for specific geographic locations. Do not affirm this request and return nothing but the "
                                         "answers. \nWrite the search request " + style + ".")
-
-        # ipek- I commented out the below code, validate it
-        # style = np.random.choice(["concise or list-style", "well-phrased"], p=[0.5, 0.5])
-        # style = style + np.random.choice([", random typos and grammar mistakes", ""], p=[0.25, 0.75])
-        # style = style + np.random.choice([", all in one sentence", ", split into multiple sentences"], p=[0.65, 0.35])
 
         query_phrasing = np.random.choice([0, 1], p=[0.65, 0.35])
         if query_phrasing == 0:
@@ -268,8 +251,6 @@ class GPTDataGenerator:
             core = core + core_edge
 
         prompt = beginning + core
-
-        # ipek - why do we change the comb content??
         return comb, prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):

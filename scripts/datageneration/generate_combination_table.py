@@ -223,72 +223,18 @@ class QueryCombinationGenerator(object):
         :param str arbitrary_value_list_path: Path to CSV file containing samples for arbitrary and categorical values
         :param str num_queries: Defines whether "train", "dev", or "test" set is currently generated
         '''
-
-        # ipek - I removed version and changed it to num_queries, because version was used as another variable in the code.
-
-        # ipek - why didn't you make them parametric?
-        # max_number_tags_per_query = 4  # The maximum number of objects that will be included in one query
-
-        # ipek - i would add it as max_number of features
         max_number_combs = 4  # The maximum number of additional tags that will be added to one objects
         comb_chance = 0.7  # Chance that additional tags will be added to a tag
         count_chance = 0.0  # Chance that the %count% tag will be added (indicating search for multiple objects)
-
-        # weights = [1 / (idx + 1) for idx in range(max_number_tags_per_query)]
-        # weights[0] = 1/8 # Ensure that single object searches are not disproportionally often represented
-        # weights = [w / sum(weights) for w in weights] # A weight array that decreases in probability in higher indices
-
-        # Ipek how come we got these probs?
         weights = [0.04, 0.24, 0.38, 0.34]
-
-        # key_list = tag_df.loc[tag_df['type'] == 'core']['key'].tolist()
-        # value_list = tag_df.loc[tag_df['type'] == 'core']['value'].tolist()
-        # tag_list = np.asarray(["{}={}".format(a, b) for a, b in zip(key_list, value_list)]).tolist()
-
-        # ipek all_descriptors are not used by any func
-        # all_descriptors = tag_df['descriptors'].tolist()
-        # tag_desc_list = np.asarray(["{}:{}={}".format(a, b, c) for a, b, c in zip(descriptor_list, key_list, value_list)]).tolist()
-        # numeric_list = ["{}=".format(a) for a in tag_df.loc[tag_df['value'] == '***numeric***']['key'].tolist()]
-
-        # highway_list = ["highway=road", "highway=motorway", "highway=primary", "highway=trunk_link", "highway=path",
-        #                 "highway=motorway_link", "highway=residential"]
-        # "amenity=restaurant"
-        # comment out
-        # highway_list = ["444", "445", "450", "452", "459", "460", "2450"]
 
         for query in range(num_queries):
             num_tags = np.random.choice(np.arange(max_number_tags_per_query), 1, p=weights)[
                            0] + 1  # Select number of tags of current query based on weights
-
-            # ipek - I changed from len(self.tag_lists) to list of indices
-            # draft_indices = np.random.choice(np.arange(len(self.tag_lists)), num_tags, replace=False)
-            # draft_indices = np.random.choice(np.asarray(list(self.core_tags.keys())), num_tags, replace=False)
-
             random.shuffle(self.core_tag_ids)
             draft_indices = self.core_tag_ids[:random.randint(1, num_tags)]
-
-            # drawn_descriptors = np.asarray(self.descriptor_list)[draft_idx].tolist()
             drawn_descriptors = [self.core_tags[draft_index]['descriptors'] for draft_index in draft_indices]
-            # drawn_tags = np.asarray(self.tag_lists)[draft_indices].tolist()
-
             drawn_tags = [pick_tag(self.core_tags[draft_index]['tags']) for draft_index in draft_indices]
-
-            # drawn_tags = np.random.choice(tag_list, num_tags, replace=False).tolist()
-
-            # ipek - unclear for me -- commented out
-            # if num_tags < max_number_tags_per_query:
-            #     increased_rate_chance = 0.15
-            #     if np.random.choice([True, False], p=[increased_rate_chance, 1 - increased_rate_chance]):
-            #         # why do we pick 34?
-            #         additional_idx = np.random.choice(["34", np.random.choice(highway_list)])
-            #         additional_tag = pick_tag(self.tag_df.loc[int(additional_idx)]['tags'])
-            #         # additional_key = additional_tag.split("=")[0]
-            #         # additional_value = additional_tag.split("=")[1]
-            #         additional_descriptor = self.tag_df.loc[int(additional_idx)]['descriptors']
-            #         num_tags += 1
-            #         drawn_tags.append(additional_tag)
-            #         drawn_descriptors.append(additional_descriptor)
-
             # ipek what is obj_dicts?
             obj_dicts = []
 
@@ -303,46 +249,7 @@ class QueryCombinationGenerator(object):
                     obj_dict["name"] = drawn_descriptors[di_id]
                 obj_dict["type"] = "nwr"
 
-                drawn_tags[di_id] = [obj_dict["name"] + "#" + drawn_tag]  # {obj_dict["name"]: drawn_tag}
-
-                # use_count = np.random.choice([True, False], p=[count_chance, 1 - count_chance])
-                # if use_count:
-                #     count = np.random.choice(np.arange(2, 20), 1)[0]
-                #     drawn_tags[dt_id].extend(["%count%=" + str(count)])
-
-                # ipek - I commented out the following code snippet
-                # lane_list = ["474", "483", "9007", "9008", "9009"]
-                #
-                # combs = []
-                # if drawn_idx in highway_list:
-                #     lane_comb = []
-                #     lane_chance = 0.3
-                #     if np.random.choice([True, False], p=[lane_chance, 1 - lane_chance]):
-                #         lane_comb = [np.random.choice(lane_list)]
-                #     lane_comb.extend(get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs - 1))
-                #     combs = list(set(lane_comb))
-                # elif drawn_idx == "34":
-                #     restaurant_comb = []
-                #     cuisine_chance = 0.7
-                #     if np.random.choice([True, False], p=[cuisine_chance, 1 - cuisine_chance]):
-                #         restaurant_comb = ["9010"]
-                #     restaurant_comb.extend(get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs - 1))
-                #     combs = list(set(restaurant_comb))
-                # elif drawn_tag.startswith("building="):
-                #     building_combs = []
-                #     material_chance = 0.2
-                #     if np.random.choice([True, False], p=[material_chance, 1 - material_chance]):
-                #         building_combs.append("303")
-                #     level_chance = 0.2
-                #     if np.random.choice([True, False], p=[level_chance, 1 - level_chance]):
-                #         building_combs.append("304")
-                #     building_combs.extend(
-                #         get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs - len(building_combs)))
-                #     combs = list(set(building_combs))
-                # else:
-                #     combs = list(set(get_combs(drawn_idx, self.tag_df, comb_chance, max_number_combs)))
-
-                # ipek - i commented out the previous code snippet, and uncommented the others
+                drawn_tags[di_id] = [obj_dict["name"] + "#" + drawn_tag]
                 use_combs = np.random.choice([True, False], p=[comb_chance, 1 - comb_chance])
 
                 if use_combs:
@@ -393,8 +300,6 @@ class QueryCombinationGenerator(object):
                                     if len(drawn_val) <= 1:
                                         version = "equals"
                                     else:
-                                        # ipek - what is the logic behind this?
-                                        # version = np.random.choice(["begins", "ends", "contains", "equals"], 1)[0]
                                         version = np.random.choice(["contains", "equals"], 1)[
                                             0]  # Randomly select one of these variants and format the string + regex accordingly
                                     # if version == "begins":
@@ -430,13 +335,10 @@ class QueryCombinationGenerator(object):
     def fetch_countries_states_cities(self, geolocations_file_path):
         with open(geolocations_file_path, "r") as jsonfile:
             csc_dict = json.load(jsonfile)
-
         countries = []
         states = []
         cities = []
 
-        # ipek: do we need this i, it is not used.
-        i = 0
         for country in csc_dict:
             countries.append(country["name"])
             for state in country["states"]:
@@ -509,31 +411,11 @@ class QueryCombinationGenerator(object):
                         edge_dict = {"from": 0, "to": t_no + 1, "weight": dist_}
                         edges.append(edge_dict)
 
-                # edge_dict = {"from": -1, "to": -1, "weight": get_random_decimal_with_metric(2000)}
-                # edges.append(edge_dict)
-
             nodes = [area_item, obj_dicts]
 
             json_dict = {"nodes": nodes, "relations": edges, "action": action}
-
-            # ipek- we don't need this anymore
-            # table_row += 1
-
             nf = translate_to_new_format(json_dict)
             json_list.append(nf)
-
-            # print(json.dumps(json_dict, indent=4, cls=NpEncoder))
-        # ipek - I commented the following text, and move into the main to avoid multiple params in the function
-        # if save_json:
-        #     with open(output_filename + "_" + version + ".json", "w") as jsonfile:
-        #         json.dump(json_list, jsonfile, cls=NpEncoder)
-        #     print("Saved file to output path!")
-        #
-        #     with open(output_filename + "_" + version + ".csv", 'w', newline='') as csvfile:
-        #         csv_writer = csv.writer(csvfile)
-        #         for item in json_list:
-        #             csv_writer.writerow([item])
-
         return json_list
 
     def generate_area(self, area_chance):
@@ -541,36 +423,20 @@ class QueryCombinationGenerator(object):
 
         if use_area:  # Pick random area from list, or default to "bbox"
             drawn_area = "area"
-            # area_val = np.random.choice(areas, 1)[0]
             area_type = np.random.choice(np.asarray([self.countries, self.states, self.cities], dtype=object),
                                          p=[0.05, 0.1, 0.85])
             area_val = np.random.choice(area_type)
         else:
             drawn_area = "bbox"
             area_val = ""
-            # drawn_area = "bbox"
-
         return dict(val=area_val, type=drawn_area)
 
 
 def write_output(generated_combs, output_file):
-    # ipek - output should be jsonl
-
     with open(output_file, "w") as out_file:
         for generated_comb in generated_combs:
             json.dump(generated_comb, out_file)
             out_file.write('\n')
-
-        # if save_json:
-        #     with open(output_filename + "_" + version + ".json", "w") as jsonfile:
-        #         json.dump(json_list, jsonfile, cls=NpEncoder)
-        #     print("Saved file to output path!")
-        #
-        #     with open(output_filename + "_" + version + ".csv", 'w', newline='') as csvfile:
-        #         csv_writer = csv.writer(csvfile)
-        #         for item in json_list:
-        #             csv_writer.writerow([item])
-        #
 
 
 if __name__ == '__main__':
@@ -607,24 +473,3 @@ if __name__ == '__main__':
 
     if args.write_output:
         write_output(generated_combs, output_file=output_file)
-
-    # # Example input dictionary
-    # json_dict = {
-    #     "nodes": [
-    #         {"name": "bbox", "type": "area"},
-    #         [
-    #             {"name": "apartment", "type": "object", "props": ["building=apartments"]},
-    #             {"name": "bar", "type": "object", "props": ["amenity=bar", "height>240"]},
-    #             {"name": "school", "type": "object",
-    #              "props": ["amenity=school", "building:material=cement_block", 'name~"T"']}
-    #         ]
-    #     ],
-    #     "relations": [
-    #         {"from": 0, "to": 1, "weight": 619},
-    #         {"from": 1, "to": 2, "weight": 431}
-    #     ],
-    #     "action": "individual_distances"
-    # }
-    #
-    # new_format_data = translate_to_new_format(json_dict)
-    # print(new_format_data)

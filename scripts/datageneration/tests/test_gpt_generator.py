@@ -55,6 +55,10 @@ class TestGPTGenerator(unittest.TestCase):
 
         assert len(predicted_persona_style_ids) == 3
 
+    def test_generate_prompt_cuisine(self):
+        # todo write a command for checking overwritten
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()
