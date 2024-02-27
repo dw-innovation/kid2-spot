@@ -172,10 +172,10 @@ index,descriptors,type,tags,combinations
 170.0,volcanic lava field|lava,core,geological=volcanic_lava_field,
 171.0,road|street|surface street|secondary road|country road|rural road|tertiary road|B-road,core,"highway=road, highway=secondary, highway=tertiary, highway=unclassified, highway=residential, highway=secondary_link, highway=tertiary_link, highway=living_street, highway=service, highway=track, area:highway=***ANY***",512|513|514|515|516|517|518|519|520|521|522|583|584|587|77|177|181|182|184|225|240|242|249|336|337|338|339|340|341|342|343|344|345|346|347|385|386|387|391|392|393|394|420|426|431|432|436|437|440|441|442|443|444|445|446|453|463|490|493|494|495|496|497|498|499|500|501|502|503|504|505|506|507|508|509|510|511
 172.0,freeway|interstate|motorway|expressway|autobahn,core,"highway=motorway, highway=trunk, highway=primary, highway=motorway_link, highway=trunk_link, highway=primary_link, highway=motorway_junction",426|437|182|439
-173.0,track|Track|sand track|foot trail|bridleway|unpaved road|path|bootleg trail|cow path|elephant path|pig trail|shortcut|social trail,core,"highway=path, highway=track, highway=bridleway, highway=path, highway=trailhead",512|385|386|387|513|514|515|391|392|393|394|516|517|518|519|520|521|522|505|261|426|431|432|177|436|181|182|437|440|184|441|443|444|442|445|446|453|583|584|587|77|336|337|338|339|340|341|342|343|344|345|346|347|225|503|504|490|493|494|495|240|496|242|497|498|499|500|501|502|249|506|507|508|509|510|511
+173.0,track|sand track|foot trail|bridleway|unpaved road|path|bootleg trail|cow path|elephant path|pig trail|shortcut|social trail,core,"highway=path, highway=track, highway=bridleway, highway=path, highway=trailhead",512|385|386|387|513|514|515|391|392|393|394|516|517|518|519|520|521|522|505|261|426|431|432|177|436|181|182|437|440|184|441|443|444|442|445|446|453|583|584|587|77|336|337|338|339|340|341|342|343|344|345|346|347|225|503|504|490|493|494|495|240|496|242|497|498|499|500|501|502|249|506|507|508|509|510|511
 174.0,Highway link|connecting roads|link roads|motorway link,core,"highway=motorway_link, highway=trunk_link, highway=primary_link, highway=secondary_link, highway=tertiary_link",437|182
 175.0,emergency escape ramp|truck arrester bed|escape|Runaway truck ramp,core,highway=escape,
-176.0,speedway|Raceway|raceway|racetrack,core,highway=raceway,512|385|386|387|513|514|515|391|392|393|394|516|517|518|519|520|521|522|505|440|441|442|443|444|445|446|583|584|503|504|490|493|494|495|240|496|242|497|498|499|500|501|502|249|506|507|508|509|510|511
+176.0,speedway|raceway|racetrack,core,highway=raceway,512|385|386|387|513|514|515|391|392|393|394|516|517|518|519|520|521|522|505|440|441|442|443|444|445|446|583|584|503|504|490|493|494|495|240|496|242|497|498|499|500|501|502|249|506|507|508|509|510|511
 177.0,sidewalk|footpath|footway|pedestrian walkway,core,"highway=footway, highway=pedestrian, footway=sidewalk, [""sidewalk""|""sidewalk:right""|""sidewalk:left""|""sidewalk:both""|""sidewalk:foot""|""sidewalk:right:foot""|""sidewalk:left:foot""|""sidewalk:both:foot""]=[""both""|""left""|""right""|""separate""|""yes""|""designated""], foot=designated, foot=official, area:highway=footway",24|26|171|172|173|174|175|176|177|178|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|428|429
 178.0,Moving walkway|moving sidewalk,core/attr,highway=footway AND conveying=***any***,
 179.0,staircase|steps|stairway|Stairs,core,"highway=steps, area:highway=steps",225|177|437|342|181
@@ -187,7 +187,7 @@ index,descriptors,type,tags,combinations
 185.0,ice road,core,ice_road=yes,24|26|171|172|173|174|175|176|177|178|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|428|429
 186.0,mountain pass,core,mountain_pass=yes,
 187.0,passing place,attr,highway=passing_place,
-188.0,emergency bay|lay-by|Emergency bay|pull-off,core,highway=emergency_bay,
+188.0,emergency bay|lay-by|pull-off,core,highway=emergency_bay,
 189.0,emergency access point|emergency access,core,"highway=emergency_access_point, highway=service AND service=emergency_access",404|60|454
 190.0,give way sign|yield sign,core,highway=give_way,
 191.0,highway milestone,core,highway=milestone,404|454
@@ -215,21 +215,21 @@ index,descriptors,type,tags,combinations
 213.0,educational district,core,landuse=education,82|15|69|447
 214.0,industrial|Industrial area|factory district|manufacturing zone|industrial park|industrial building,core,"landuse=industrial, industrial=***any***, man_made=works, building=industrial",134|264|143|144|145|272|554|305|573|574|575|576|577|579|580|581|332|333|214|600|473|369|252
 215.0,urban area|town|township|settlement|village|community|suburb|hamlet|megalopolis|residential area|dwelling|city|metropolis|municipality,core,"landuse=residential, place=[""city""|""suburb""|""town""|""village""|""isolated_dwelling""|""hamlet""], landuse=[""residential""|""commercial""|""retail""|""institutional""|""education""]",101|102|231|104|523|524|525|143|145|241|82|86|447
-216.0,marine farm|Aquaculture|fishery|fish farm|aquaculture,core,"landuse=aquaculture, seamark:type=marine_farm",291|414
+216.0,marine farm|fishery|fish farm|aquaculture,core,"landuse=aquaculture, seamark:type=marine_farm",291|414
 217.0,planter|gardens|Allotments|rosarium|allotment|plots|flower garden|Flower bed,core,"landuse=allotments, landuse=flowerbed, man_made=planter, barrier=planter, garden:style=flower_garden, garden:style=rosarium, allotment=plot",231|523|524|525|241
-218.0,rural area|farming area|cultivated land|farmland|Farmland|farm|agrarian region|agricultural land|cropland|countryside,core,"landuse=farmland, landuse=farmland, landuse=orchard, landuse=farmyard, landuse=vineyard, landuse=allotments, landuse=greenhouse_horticulture, landuse=plant_nursery, building=farm, landuse=farm, place=farm",218
+218.0,rural area|farming area|cultivated land|farmland|farm|agrarian region|agricultural land|cropland|countryside,core,"landuse=farmland, landuse=farmland, landuse=orchard, landuse=farmyard, landuse=vineyard, landuse=allotments, landuse=greenhouse_horticulture, landuse=plant_nursery, building=farm, landuse=farm, place=farm",218
 219.0,woodlands|woodland|grove|forest|woods,core,"landuse=forest, landuse=orchard, natural=wood, landcover=trees",459|219
 220.0,greenhouse horticulture|glasshouse|Greenhouse|hothouse,core,"landuse=greenhouse_horticulture, landuse=greenhouse, building=greenhouse",143|144|145|218|220
 221.0,fruit garden|fruit grove|orchard,core,landuse=orchard,225|231|523|524|525|241|82|447
-222.0,winery|vineyard|Vineyard|grape plantation,core,landuse=vineyard,
+222.0,winery|vineyard|grape plantation,core,landuse=vineyard,
 223.0,conservation,core,landuse=conservation,
-224.0,car storage facilities|garages|carports|Garages,core,"landuse=garages, building=garage, building=garages",143|144|145|26|27
-225.0,greenfield|lawn|grass|village green|Grass|meadow|fell|tundra|grassland|turf,core,"landuse=grass, landuse=village_green, landuse=meadow, landuse=greenfield, surface=grass, surface=artificial_turf, natural=grassland, natural=fell, natural=tundra",225|327|82|436|85|212|218|447
+224.0,car storage facilities|garages|carports,core,"landuse=garages, building=garage, building=garages",143|144|145|26|27
+225.0,greenfield|lawn|grass|village green|meadow|fell|tundra|grassland|turf,core,"landuse=grass, landuse=village_green, landuse=meadow, landuse=greenfield, surface=grass, surface=artificial_turf, natural=grassland, natural=fell, natural=tundra",225|327|82|436|85|212|218|447
 226.0,landfill,core,landuse=landfill,
 227.0,"army base|military installation|Military base, naval base|marine base|navy base",core,"landuse=military, military=base, military_service=***any***",2|82|275|274|86|447
 228.0,Military Trench|war trench,,military=trench,
-229.0,harbour|port|seaport|Port|harbor,core,"landuse=port, industrial=port, landuse=pond",
-230.0,Quarry|mine|quarry|excavation site,core,"landuse=quarry, industrial=mine",
+229.0,harbour|port|seaport|harbor,core,"landuse=port, industrial=port, landuse=pond",
+230.0,mine|quarry|excavation site,core,"landuse=quarry, industrial=mine",
 231.0,recreation ground|Park|public garden|greenspace|recreational area,core,"landuse=recreation_ground, landuse=village_green, leisure=park, leisure=garden",225|219|145|82|85|86|215|217|218|283|284|221|447
 232.0,winter sports,core,landuse=winter_sports,
 233.0,amusement arcade,core,"leisure=amusement_arcade, leisure=adult_gaming_centre",
@@ -260,7 +260,7 @@ index,descriptors,type,tags,combinations
 258.0,observatory|telescope,core,"man_made=observatory, man_made=telescope",
 259.0,offshore platform,core,man_made=offshore_platform,
 260.0,petroleum well,core,man_made=petroleum_well,214
-261.0,dock|pier|wharf|Pier|quay|floating pier|jetty|berth,core,"man_made=pier, man_made=quay, man_made=pier AND floating=yes",24|26|171|428|173|172|174|175|177|178|176|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|429
+261.0,dock|pier|wharf|quay|floating pier|jetty|berth,core,"man_made=pier, man_made=quay, man_made=pier AND floating=yes",24|26|171|428|173|172|174|175|177|178|176|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|429
 262.0,Diving Platform|diving tower,core,man_made=tower AND tower:type=diving,
 263.0,pipeline,core,man_made=pipeline,411
 264.0,pumping station,core,man_made=pumping_station,132|143|82|214|447
@@ -283,12 +283,12 @@ index,descriptors,type,tags,combinations
 281.0,military range,core,military=range,
 282.0,Military training area|military proving ground,core,military=training_area,
 283.0,thicket|hedges|heath|shrubbery|scrub|Bushes,core,"natural=heath, natural=scrub, natural=shrubbery, barrier=hedge",225|231|523|524|525|145|241|411|218|283|284
-284.0,row of trees|tree|copse|tree row|Tree|trees,core,"natural=tree, natural=tree_row, landuse=orchard",225|231|523|524|525|241|82|447
-285.0,shoreline|coast|beach|Beach,core,"natural=beach, natural=bay, natural=coastline",219|327
+284.0,row of trees|tree|copse|tree row|trees,core,"natural=tree, natural=tree_row, landuse=orchard",225|231|523|524|525|241|82|447
+285.0,shoreline|coast|beach,core,"natural=beach, natural=bay, natural=coastline",219|327
 286.0,geyser,core,natural=geyser,
 287.0,glacier,core,natural=glacier,
 288.0,mud|muddy area,core,natural=mud,
-289.0,spit|Peninsula|peninsula|promontory|headland|cape|land tongue,core,"natural=peninsula, natural=isthmus, natural=cape",
+289.0,spit|peninsula|promontory|headland|cape|land tongue,core,"natural=peninsula, natural=isthmus, natural=cape",
 290.0,reef,core,natural=reef,
 291.0,body of water|water,core,natural=water,512|385|386|387|513|514|515|391|392|393|394|516|517|518|398|519|520|521|522|269|411|412|414|415|416|505|418|554|45|440|441|442|443|444|445|446|506|447|65|583|584|460|507|86|216|473|218|503|504|490|493|494|239|240|495|242|496|244|497|498|499|500|249|501|502|508|509|510|511
 292.0,cliff|Cliffs|escarpment|precipice,core,natural=cliff,512|385|386|387|513|514|515|391|392|521|522|393|394|516|517|518|519|145|505|440|441|442|443|444|445|446|520|583|584|503|504|490|493|494|495|240|496|242|497|498|499|500|501|502|249|506|507|508|509|510|511
@@ -326,7 +326,7 @@ index,descriptors,type,tags,combinations
 324.0,office of a community of faith,core,office=religion,544|545|547|548|549|550|551|538|539|540|541|542|543
 325.0,office of a telecommunication company,core,office=telecommunication,366
 326.0,archipelago,core,place=archipelago,
-327.0,atoll|islet|island|Island,core,"place=island, place=islet",225|299|459|219|283|285
+327.0,atoll|islet|island,core,"place=island, place=islet",225|299|459|219|283|285
 328.0,square,core,place=square,24|26|171|172|173|174|175|176|177|178|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|231|428|429
 329.0,sea|ocean,core,place=sea,
 330.0,cable|power cable,core,power=cable,
@@ -339,7 +339,7 @@ index,descriptors,type,tags,combinations
 337.0,railway under construction|railway repair,core,railway=construction,433
 338.0,railroad tracks|Railway tracks|train tracks|train line|tracks,core,"railway=rail, railway=light_rail, railway=miniature, railway=narrow_gauge, railway=subway, railway=tram, railway=route",433|24|26|171|428|172|173|174|175|176|177|178|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|225|429
 339.0,high-speed train tracks|high speed train track,core,railway=rail AND highspeed=yes,
-340.0,tram tracks|tram|subway|light rail|subway tracks|metro|Subway|underground|tube|rapid transit,core,"railway=subway, railway=tram, railway=light_rail",433
+340.0,tram tracks|tram|subway|light rail|subway tracks|metro|underground|tube|rapid transit,core,"railway=subway, railway=tram, railway=light_rail",433
 341.0,railway bridge|railroad viaduct|train bridge|railroad bridge|trestle bridge,core/attr,railway=***any*** AND bridge=yes,
 342.0,railway cutting|submerged railway|sunken railway|under-level railway,attr,cutting=yes,
 343.0,railway tunnel|train tunnel|metro tunnel|railway underpass|subway tunnel|railroad tunnel,attr,railway=***any*** AND tunnel=yes,
@@ -398,7 +398,7 @@ index,descriptors,type,tags,combinations
 396.0,alpine hut,core,tourism=alpine_hut,
 397.0,aquarium,core,tourism=aquarium,
 398.0,tourist attraction,core,tourism=attraction,512|513|514|515|516|517|518|519|520|521|522|24|537|26|539|540|541|542|543|544|545|546|547|548|549|550|551|555|578|583|584|82|95|110|136|141|143|144|145|538|156|171|172|173|174|175|176|177|178|179|180|181|182|183|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|203|207|208|209|231|240|242|249|262|268|275|284|291|298|385|386|387|391|392|393|394|422|428|429|440|441|442|443|444|445|446|447|474|475|490|493|494|495|496|497|498|499|500|501|502|503|504|505|506|507|508|509|510|511
-399.0,parking lot for campers|caravan site|Caravan site|parking area for motorhomes,core,tourism=caravan_site,563
+399.0,parking lot for campers|caravan site|parking area for motorhomes,core,tourism=caravan_site,563
 400.0,chalet,core,tourism=chalet,482|483|101|104|143|563
 401.0,guest house,core,tourism=guest_house,101|102|104|9|11|12|143|403|563
 402.0,hostel,core,tourism=hostel,563|143
@@ -431,7 +431,7 @@ index,descriptors,type,tags,combinations
 429.0,divided highway|dual carriageway road|Dual carriageway,core,"dual_carriageway=yes, area:highway=traffic_island",225|85
 430.0,slip course|slip track|slip training,core,leisure=slipway,24|26|171|428|172|173|174|175|176|177|178|179|180|181|182|183|441|442|187|188|189|190|191|192|193|194|195|196|197|198|199|200|201|95|429
 431.0,monorail|single rail system|monorail track,core,railway=monorail,
-432.0,Funicular|funicular|cable railway|incline railway,core,railway=funicular,
+432.0,funicular|cable railway|incline railway,core,railway=funicular,
 433.0,Train yard|railyard|rail yard|train depot,core,"landuse=depot, service=yard, landuse=railway",444|440|431|336|337|338|339|340|181|341|343|344|345|346|347|443|432
 434.0,inlet|Estuary|baymouth bar,core,estuary=yes,
 435.0,skyscraper|condominiums|tall buildings|High-rise apartments|high-rise buildings|skyline,core,building=***any*** AND building:levels>10,
@@ -561,7 +561,7 @@ index,descriptors,type,tags,combinations
 559.0,Postal Relay Box|post relay box,core,man_made=street_cabinet AND street_cabinet=postal_service,
 560.0,Traffic Monitoring Cabinet|traffic count|traffic count box|vehicle counting,core,man_made=street_cabinet AND street_cabinet=traffic_monitoring,
 561.0,first aid kit|med kit|medkit,core,emergency=first_aid_kit,
-562.0,Lifeboat Station|lifeboat|marine rescue|boat rescue|lifeboat station,core,emergency=water_rescue,
+562.0,lifeboat|marine rescue|boat rescue|lifeboat station,core,emergency=water_rescue,
 563.0,Wi-Fi Hotspot|wi-fi|public wifi|hotspot,core,internet_access=wlan,
 564.0,Antenna,core,man_made=antenna,
 565.0,Courtyard|yard,core,man_made=courtyard,
@@ -584,7 +584,7 @@ index,descriptors,type,tags,combinations
 582.0,Parking Ticket Vending Machine|parking ticket,core,amenity=vending_machine AND vending=parking_tickets,
 583.0,Cycling track|running track|athletics track,core,"leisure=track AND sport=cycling, leisure=track AND sport=running, leisure=track AND sport=athletics, sport=athletics",
 584.0,Horse Racetrack|equestrian race track|horse racing,core,sport=horse_racing,
-585.0,Advertising Totem|Poster Box|Billboard|Notice Board|Advertising Column|advertising board|advertising column|advertising screen|advertising sign|advertising tarp|wall painting,core,advertising=***any***,
+585.0,Advertising Totem|Poster Box|Billboard|Notice Board|advertising board|advertising column|advertising screen|advertising sign|advertising tarp|wall painting,core,advertising=***any***,
 586.0,Destination Sign,core,street_sign=destination_sign,
 587.0,Hiking route | walking route | outdoor sports | bicycle route,core,"route=hiking, route=bicyle, route=walking",
 588.0,public transport routes | bus route | tram route |metro route,core,"route=bus, route= train, route= ferry, route=tram, route= trolleybus, route=subway",
