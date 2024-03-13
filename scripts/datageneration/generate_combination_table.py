@@ -1,9 +1,11 @@
 import json
 import random
 from argparse import ArgumentParser
+from typing import List
 
 import numpy as np
 import pandas as pd
+from datageneration.data_model import Entity, Area, Relation, LocPoint
 from tqdm import tqdm
 
 
@@ -29,59 +31,61 @@ def extract_variables(input_string):
     return None, None, None, None
 
 
-def translate_to_new_format(json_dict):
-    new_format = {
-        "a": {},
-        "ns": [],
-        "es": []
-    }
-
-    node_mapping = {}  # To keep track of node IDs in the new format
-
-    # new_format["a"]["t"] = "bbox" if json_dict["nodes"][0]["name"] == "bbox" else "polygon"
-    new_format["a"]["t"] = json_dict["nodes"][0]["type"]
-    new_format["a"]["v"] = json_dict["nodes"][0]["val"]
-    for node in json_dict["nodes"][1]:
-        nwr = {
-            "id": len(new_format["ns"]),
-            # "n": node["name"],
-            # "osm_tag": node.get("props", [])[0].split("#")[1],
-            "flts": [],
-            "t": node["type"]
-        }
-
-        filters = node.get("props", [])
-        for pid, prop in enumerate(filters):
-            # if pid == 0:
-            #     continue
-            k, v, op, d = extract_variables(prop)
-            filter_op = op
-
-            nwr["flts"].append({
-                "k": k,
-                "v": v,
-                "op": filter_op,
-                "n": d
-            })
-
-        new_format["ns"].append(nwr)
-        node_mapping[node["name"]] = nwr["id"]
-
-    for relation in json_dict["relations"]:
-        edge = {
-            "src": relation["from"],
-            "tgt": relation["to"]
-        }
-
-        if "weight" in relation:
-            edge["t"] = "dist"
-            edge["dist"] = relation["weight"]
-        else:
-            edge["t"] = "in"
-
-        new_format["es"].append(edge)
-
-    return new_format
+# def translate_to_new_format(json_dict):
+#     print("json dictionary")
+#     print(json_dict)
+#     new_format = {
+#         "a": {},
+#         "ns": [],
+#         "es": []
+#     }
+#
+#     node_mapping = {}  # To keep track of node IDs in the new format
+#
+#     # new_format["a"]["t"] = "bbox" if json_dict["nodes"][0]["name"] == "bbox" else "polygon"
+#     new_format["a"]["t"] = json_dict["nodes"][0]["type"]
+#     new_format["a"]["v"] = json_dict["nodes"][0]["val"]
+#     for node in json_dict["nodes"][1]:
+#         nwr = {
+#             "id": len(new_format["ns"]),
+#             # "n": node["name"],
+#             # "osm_tag": node.get("props", [])[0].split("#")[1],
+#             "flts": [],
+#             "t": node["type"]
+#         }
+#
+#         filters = node.get("props", [])
+#         for pid, prop in enumerate(filters):
+#             # if pid == 0:
+#             #     continue
+#             k, v, op, d = extract_variables(prop)
+#             filter_op = op
+#
+#             nwr["flts"].append({
+#                 "k": k,
+#                 "v": v,
+#                 "op": filter_op,
+#                 "n": d
+#             })
+#
+#         new_format["ns"].append(nwr)
+#         node_mapping[node["name"]] = nwr["id"]
+#
+#     for relation in json_dict["relations"]:
+#         edge = {
+#             "src": relation["from"],
+#             "tgt": relation["to"]
+#         }
+#
+#         if "weight" in relation:
+#             edge["t"] = "dist"
+#             edge["dist"] = relation["weight"]
+#         else:
+#             edge["t"] = "in"
+#
+#         new_format["es"].append(edge)
+#
+#     return new_format
 
 
 def get_random_decimal_with_metric(range):
@@ -89,7 +93,7 @@ def get_random_decimal_with_metric(range):
     if np.random.choice([True, False], 1)[0]:
         h_ = h_ / np.random.choice([10, 100], 1)[0]
 
-    h_ = str(h_) + " " + np.random.choice(["mm", "cm", "m", "km", "in", "ft", "yd", "mi", "le"], 1)[0]  # "cm",
+    h_ = str(h_) + " " + np.random.choice(["m", "km", "in", "ft", "yd", "mi", "le"], 1)[0]  # "cm",
 
     return h_
 
@@ -136,27 +140,11 @@ def pick_tag(tag_list_string):
 class QueryCombinationGenerator(object):
     def __init__(self, geolocations_file_path, tag_list_path, arbitrary_value_list_path, max_number_tags_per_query):
         countries, states, cities = self.fetch_countries_states_cities(geolocations_file_path)
-
         self.countries = countries
         self.states = states
         self.cities = cities
         self.arbitrary_value_df = pd.read_csv(arbitrary_value_list_path, dtype={'index': int})
         self.max_number_tags_per_query = max_number_tags_per_query
-
-        # Select type="core" as these are base categories (e.g. "house"), unlike attributes (e.g. "height")
-
-        # the following data structure produce unodered list, so the drawn index don't map the correct ones
-        # self.descriptor_list = self.tag_df.loc[self.tag_df['type'] == 'core'][
-        #     'descriptors'].tolist()  # descriptor is the generic but unique name of this category
-        # ipek - changed it as follows
-
-        # todo: find a better name
-        # self.descriptor_list = {}
-        # self.tag_lists = {}
-
-        # for idx, row in self.tag_df[self.tag_df['type'] == 'core'].iterrows():
-        #     self.descriptor_list[row['index']] = row['descriptors']
-        #     self.tag_lists[row['index']] = row['tags']
 
         tag_df = pd.read_csv(tag_list_path)
         tag_df = tag_df[tag_df.select_dtypes(float).notna().any(axis=1)]
@@ -179,10 +167,15 @@ class QueryCombinationGenerator(object):
         self.desriptors_to_idx = descriptors_to_idx
         self.all_tags = all_tags
         self.numeric_list = [num.split("=")[0] + "=" for num in tag_df['tags'].tolist() if "***numeric***" in num]
-        # self.tag_lists = self.tag_df.loc[self.tag_df['type'] == 'core']['tags'].tolist()
 
-    # is this for determining features, this mostly gives one combination, I think use_combs should not be in the function
-    # ipek - check why it is recursive???
+        # settings for relation generation
+        self.MAX_DISTANCE = 2000
+        self.task_chances = {
+            "within_radius": 0.2,
+            "in_area": 0.1,
+            "individual_distances": 0.7
+        }
+
     def get_combs(self, drawn_idx, max_number_combs):
         '''
         Takes a tag (key/value pair) and adds a variable number of random tags.
@@ -212,7 +205,39 @@ class QueryCombinationGenerator(object):
     def index_to_descriptors(self, index):
         return self.all_tags[int(index)]['descriptors']
 
-    def generate_random_tag_combinations(self, num_queries):
+    def generate_entities(self) -> List[Entity]:
+        pass
+
+    # todo make it independent from entities
+    def generate_relations(self, num_entities) -> List[Relation]:
+        relations = []
+        selected_task = np.random.choice(np.asarray(list(self.task_chances.keys())),
+                                         p=np.asarray(list(self.task_chances.values())))
+        if selected_task == "individual_distances" and num_entities > 2:  # Pick random distance between all individual objects
+            # action = "individual_distances"
+
+            for t_no in range(num_entities):
+                if t_no != num_entities - 1:
+                    relations.append(
+                        Relation(name='dist', source=t_no, target=t_no + 1,
+                                 value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
+
+        elif selected_task == "in_area" or num_entities == 1:  # Just search for all given objects in area, no distance required
+            # action = "in_area"
+
+            # edge_dict = {"from": -1, "to": -1, "weight": -1}
+            # edges.append(edge_dict)
+            pass
+        elif selected_task == 'within_radius':  # Search for all places where all objects are within certain radius
+            for t_no in range(num_entities):
+                if t_no != num_entities - 1:
+                    relations.append(
+                        Relation(name='dist', source=0, target=t_no + 1,
+                                 value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
+
+        return relations
+
+    def generate_random_tag_combinations(self, num_queries) -> List[Entity]:
         '''
         This method randomly selects a different number of tags (key/value pairs) and adds a variable number of
         additional tags and info. It includes variations such as different comparison operators and different
@@ -237,7 +262,7 @@ class QueryCombinationGenerator(object):
             drawn_tags = [pick_tag(self.core_tags[draft_index]['tags']) for draft_index in draft_indices]
             # ipek what is obj_dicts?
             obj_dicts = []
-
+            entity_count = 0
             for di_id, drawn_idx in enumerate(draft_indices):
                 drawn_tag = drawn_tags[di_id]
 
@@ -328,6 +353,8 @@ class QueryCombinationGenerator(object):
                         drawn_tags[di_id].extend(combs)
 
                 obj_dict["props"] = drawn_tags[di_id]
+                obj_dict["id"] = entity_count
+                entity_count += 1
                 obj_dicts.append(obj_dict)
 
             yield obj_dicts
@@ -366,70 +393,41 @@ class QueryCombinationGenerator(object):
         '''
         # ipek - node types are not used
         node_types = ["nwr", "cluster", "group"]
-        tasks = ["within_radius", "in_area", "individual_distances"]
-
-        # Ipek what is rationale to choose these probs
-        task_chances = [0.2, 0.1, 0.7]
-
-        json_list = []
+        loc_points = []
 
         # ipek- we don't need this anymore
         # table_row = 0
 
-        for obj_dicts in tqdm(self.generate_random_tag_combinations(num_queries), total=num_queries):
-            tag_combinations = [x["props"] for x in obj_dicts]
-            # ipek - i capsulate the area generation as function
-            area_item = self.generate_area(area_chance)
+        for entities in tqdm(self.generate_random_tag_combinations(num_queries), total=num_queries):
+            # # print("obj dicts")
+            # print(entities)
+            # tag_combinations = [x["props"] for x in entities]
+            #
+            # print(tag_combinations)
 
-            edges = []
+            # todo change the below code
+            area = self.generate_area(area_chance)
 
-            task = np.random.choice(tasks, p=task_chances)
+            # todo add function for property generation
 
-            if task == "individual_distances" and len(
-                    tag_combinations) > 2:  # Pick random distance between all individual objects
-                action = "individual_distances"
+            relations = self.generate_relations(num_entities=len(entities))
 
-                for t_no, t in enumerate(tag_combinations):
-                    if t_no != len(tag_combinations) - 1:
-                        edge_dict = {"from": t_no, "to": t_no + 1, "weight": get_random_decimal_with_metric(2000)}
-                        edges.append(edge_dict)
-            elif task == "in_area" or len(
-                    tag_combinations) == 1:  # Just search for all given objects in area, no distance required
-                action = "in_area"
+            loc_points.append(LocPoint(area=area, entities=entities, relations=relations).dict())
+        return loc_points
 
-                for od in obj_dicts:
-                    od["props"] = [s for s in od["props"] if "%count%" not in s]
-
-                # edge_dict = {"from": -1, "to": -1, "weight": -1}
-                # edges.append(edge_dict)
-            else:  # Search for all places where all objects are within certain radius
-                action = "within_radius"
-                dist_ = get_random_decimal_with_metric(2000)
-
-                for t_no, t in enumerate(tag_combinations):
-                    if t_no != len(tag_combinations) - 1:
-                        edge_dict = {"from": 0, "to": t_no + 1, "weight": dist_}
-                        edges.append(edge_dict)
-
-            nodes = [area_item, obj_dicts]
-
-            json_dict = {"nodes": nodes, "relations": edges, "action": action}
-            nf = translate_to_new_format(json_dict)
-            json_list.append(nf)
-        return json_list
-
-    def generate_area(self, area_chance):
+    def generate_area(self, area_chance) -> Area:
+        # todo: change this
         use_area = np.random.choice([True, False], p=[area_chance, 1 - area_chance])
 
         if use_area:  # Pick random area from list, or default to "bbox"
-            drawn_area = "area"
-            area_type = np.random.choice(np.asarray([self.countries, self.states, self.cities], dtype=object),
-                                         p=[0.05, 0.1, 0.85])
-            area_val = np.random.choice(area_type)
+            area_type = "area"
+            selected_areas = np.random.choice(np.asarray([self.countries, self.states, self.cities], dtype=object),
+                                              p=[0.05, 0.1, 0.85])
+            area_val = np.random.choice(selected_areas)
         else:
-            drawn_area = "bbox"
+            area_type = "bbox"
             area_val = ""
-        return dict(val=area_val, type=drawn_area)
+        return Area(type=area_type, value=area_val)
 
 
 def write_output(generated_combs, output_file):
@@ -470,6 +468,6 @@ if __name__ == '__main__':
 
     generated_combs = query_comb_generator.run(area_chance=area_chance,
                                                num_queries=num_samples)
-
+    print(generated_combs[5])
     if args.write_output:
         write_output(generated_combs, output_file=output_file)
