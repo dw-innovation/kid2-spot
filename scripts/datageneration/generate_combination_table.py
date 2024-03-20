@@ -1,34 +1,32 @@
 import json
 import random
-from argparse import ArgumentParser
-from typing import List
-
 import numpy as np
 import pandas as pd
-from datageneration.data_model import Entity, Area, Relation, LocPoint
+from argparse import ArgumentParser
 from tqdm import tqdm
-
+from typing import List
+from datageneration.data_model import Entity, Area, Relation, Property, LocPoint
 
 # ipek - my suggestion is to generate 100 samples for each tags and then split this dataset into training/test/validation
 
-def extract_variables(input_string):
-    try:
-        desc = input_string.split("#")[0]
-        tag = input_string.split("#")[1]
-    except IndexError as e:
-        print(f"Index error while extracting variables {e} for {input_string}")
-        return None, None, None, None
-    operators = ['=', '>', '<', '~']  # '>=', '<=',
-    for op in operators:
-        if op in input_string:
-            key, rest = tag.split(op, 1)
-            # if op == "~":
-            #     value = re.search(r'"([^"]*)"', rest).group(1)
-            # else:
-            value = rest
-            return key.strip(), value.strip(), op, desc.strip()
-
-    return None, None, None, None
+# def extract_variables(input_string): LocPoint
+#     try:
+#         desc = input_string.split("#")[0]
+#         tag = input_string.split("#")[1]
+#     except IndexError as e:
+#         print(f"Index error while extracting variables {e} for {input_string}")
+#         return None, None, None, None
+#     operators = ['=', '>', '<', '~']  # '>=', '<=',
+#     for op in operators:
+#         if op in input_string:
+#             key, rest = tag.split(op, 1)
+#             # if op == "~":
+#             #     value = re.search(r'"([^"]*)"', rest).group(1)
+#             # else:
+#             value = rest
+#             return key.strip(), value.strip(), op, desc.strip()
+#
+#     return None, None, None, None
 
 
 # def translate_to_new_format(json_dict):
@@ -138,18 +136,17 @@ def pick_tag(tag_list_string):
 
 
 class QueryCombinationGenerator(object):
-    def __init__(self, geolocations_file_path, tag_list_path, arbitrary_value_list_path, max_number_tags_per_query):
+    def __init__(self, geolocations_file_path, tag_list_path, arbitrary_value_list_path):
         countries, states, cities = self.fetch_countries_states_cities(geolocations_file_path)
         self.countries = countries
         self.states = states
         self.cities = cities
         self.arbitrary_value_df = pd.read_csv(arbitrary_value_list_path, dtype={'index': int})
-        self.max_number_tags_per_query = max_number_tags_per_query
-
         tag_df = pd.read_csv(tag_list_path)
         tag_df = tag_df[tag_df.select_dtypes(float).notna().any(axis=1)]
 
         id2_descriptors = {}
+        descriptor2_ids = {}
         all_tags = {}
         osm_tags = {}
         osm_properties = {}
@@ -168,10 +165,14 @@ class QueryCombinationGenerator(object):
             else:
                 osm_properties[int(tag['index'])] = tag
 
+            for descriptor in descriptors:
+                descriptor2_ids[descriptor] = int(tag['index'])
+
         self.osm_tags = osm_tags
         self.osm_tag_ids = list(osm_tags.keys())
         self.osm_properties = osm_properties
         self.id2_descriptors = id2_descriptors
+        self.descriptor2_ids = descriptor2_ids
 
         self.all_tags = all_tags
         self.numeric_list = [num.split("=")[0] + "=" for num in tag_df['tags'].tolist() if "***numeric***" in num]
@@ -246,89 +247,103 @@ class QueryCombinationGenerator(object):
             include_property = np.random.choice([True, False], p=[prob_of_having_property, 1 - prob_of_having_property])
 
             if include_property:
-                self.generate_properties(entity_id=drawn_osm_tag_idx, max_number_of_props=max_number_of_props)
+                # todo change the number of prompt that would be generated
+                # max_number_of_props = max_number_of_props --> todo: randomly select
+                num_of_props = 2
+                self.generate_properties(entity_id=drawn_osm_tag_idx, num_of_props=num_of_props)
 
             entities.append(Entity(id=entity_id, name=entity_name))
 
         return entities
 
-    def generate_properties(self, entity_id: int, max_number_of_props: int) -> List[Property]:
 
-        combs = list(set(self.get_combs(drawn_idx=entity_id, max_number_combs=max_number_of_props)))
-        if len(combs) > 0:
-            for comb_id, comb in enumerate(combs):
-                try:
-                    row = self.all_tags[int(comb)]
-                except ValueError as e:
-                    print(f"comb {comb} has value error: {e}")
-                    continue
-                row_tag = pick_tag(row['tags'])
-                row_key = row_tag.split("=")[0]
+    def generate_properties(self, entity_id: int, num_of_props: int) -> List[Property]:
+        print("Generating properties for", entity_id)
 
-                try:
-                    row_val = row_tag.split("=")[1]
-                except IndexError as e:
-                    continue
-                    print(f"Index error on {row_tag}: {e}")
+        associated_tag_combination = self.all_tags[int(entity_id)]['combinations'].split('|')
 
-                curr_desc = np.random.choice(row['descriptors'].split("|"), 1)[0]
-                if "***any***" in row_val or "***numeric***" in row_val:
-                    comb_tag = row_key + "="
-                else:
-                    if "|" in row_val:
-                        comb_tag = row_key + "=" + np.random.choice(row_val.split("|"), 1)[0]
-                    else:
-                        comb_tag = row_key + "=" + row_val
+        # find attributes
 
-                if comb_tag in self.numeric_list:
-                    comb_tag = comb_tag[:-1] + np.random.choice([">", "=", "<"], 1)[
-                        0]  # ">=", "<=",  For numeric values, randomly use one of these comparison operators
-                    if "height" in comb_tag:
-                        combs[comb_id] = comb_tag + get_random_decimal_with_metric(2000)
-                    else:
-                        combs[comb_id] = comb_tag + str(np.random.choice(np.arange(50), 1)[0])
+        print(associated_tag_combination)
 
-                elif len(comb_tag.split("=")[1]) == 0:
-                    try:
-                        arb_vals = \
-                            self.arbitrary_value_df.loc[
-                                self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
-                                "value_list"].iloc[0].split("|")
-                    except IndexError as e:
-                        print(f'{comb_tag} has an indexing error {e}')
-                    drawn_val = np.random.choice(arb_vals, 1)[0]
-                    if comb_tag.split("=")[0] in ["name", "addr:street"]:
-                        if len(drawn_val) <= 1:
-                            version = "equals"
-                        else:
-                            version = np.random.choice(["contains", "equals"], 1)[
-                                0]  # Randomly select one of these variants and format the string + regex accordingly
-                        # if version == "begins":
-                        #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
-                        #     combs[comb_id] = comb_tag[:-1] + "~\"^" + drawn_val[:cutoff] + "\""
-                        # elif version == "ends":
-                        #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
-                        #     combs[comb_id] = comb_tag[:-1] + "~\"" + drawn_val[cutoff:] + "$\""
-                        if version == "contains":
-                            len_substring = np.random.choice(np.arange(1, len(drawn_val)))
-                            idx = random.randrange(0, len(drawn_val) - len_substring + 1)
-                            combs[comb_id] = comb_tag[:-1] + "~" + drawn_val[idx: (idx + len_substring)]
-                        else:
-                            combs[comb_id] = comb_tag + drawn_val
-                    else:
-                        combs[comb_id] = comb_tag + drawn_val
-                else:
-                    combs[comb_id] = comb_tag
-                    # if "|" in row['value']:
-                    #     combs[comb_id] = row['key'] + "=" + np.random.choice(row['value'].split("|"), 1)[0]
-                    # else:
-                    #     combs[comb_id] = row['key'] + "=" + row['value']
 
-                combs[comb_id] = curr_desc + "#" + combs[comb_id]
+        # print(tag_combs)
 
-            drawn_tags[di_id].extend(combs)
-
-        obj_dict["props"] = drawn_tags[di_id]
+        # combs = list(set(self.get_combs(drawn_idx=entity_id, max_number_combs=num_of_props)))
+        # if len(combs) > 0:
+        #     for comb_id, comb in enumerate(combs):
+        #         try:
+        #             row = self.all_tags[int(comb)]
+        #         except ValueError as e:
+        #             print(f"comb {comb} has value error: {e}")
+        #             continue
+        #         row_tag = pick_tag(row['tags'])
+        #         row_key = row_tag.split("=")[0]
+        #
+        #         try:
+        #             row_val = row_tag.split("=")[1]
+        #         except IndexError as e:
+        #             continue
+        #             print(f"Index error on {row_tag}: {e}")
+        #
+        #         curr_desc = np.random.choice(row['descriptors'].split("|"), 1)[0]
+        #         if "***any***" in row_val or "***numeric***" in row_val:
+        #             comb_tag = row_key + "="
+        #         else:
+        #             if "|" in row_val:
+        #                 comb_tag = row_key + "=" + np.random.choice(row_val.split("|"), 1)[0]
+        #             else:
+        #                 comb_tag = row_key + "=" + row_val
+        #
+        #         if comb_tag in self.numeric_list:
+        #             comb_tag = comb_tag[:-1] + np.random.choice([">", "=", "<"], 1)[
+        #                 0]  # ">=", "<=",  For numeric values, randomly use one of these comparison operators
+        #             if "height" in comb_tag:
+        #                 combs[comb_id] = comb_tag + get_random_decimal_with_metric(2000)
+        #             else:
+        #                 combs[comb_id] = comb_tag + str(np.random.choice(np.arange(50), 1)[0])
+        #
+        #         elif len(comb_tag.split("=")[1]) == 0:
+        #             try:
+        #                 arb_vals = \
+        #                     self.arbitrary_value_df.loc[
+        #                         self.arbitrary_value_df['key'] == comb_tag.split("=")[0]][
+        #                         "value_list"].iloc[0].split("|")
+        #             except IndexError as e:
+        #                 print(f'{comb_tag} has an indexing error {e}')
+        #             drawn_val = np.random.choice(arb_vals, 1)[0]
+        #             if comb_tag.split("=")[0] in ["name", "addr:street"]:
+        #                 if len(drawn_val) <= 1:
+        #                     version = "equals"
+        #                 else:
+        #                     version = np.random.choice(["contains", "equals"], 1)[
+        #                         0]  # Randomly select one of these variants and format the string + regex accordingly
+        #                 # if version == "begins":
+        #                 #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
+        #                 #     combs[comb_id] = comb_tag[:-1] + "~\"^" + drawn_val[:cutoff] + "\""
+        #                 # elif version == "ends":
+        #                 #     cutoff = np.random.choice(np.arange(1, len(drawn_val)))
+        #                 #     combs[comb_id] = comb_tag[:-1] + "~\"" + drawn_val[cutoff:] + "$\""
+        #                 if version == "contains":
+        #                     len_substring = np.random.choice(np.arange(1, len(drawn_val)))
+        #                     idx = random.randrange(0, len(drawn_val) - len_substring + 1)
+        #                     combs[comb_id] = comb_tag[:-1] + "~" + drawn_val[idx: (idx + len_substring)]
+        #                 else:
+        #                     combs[comb_id] = comb_tag + drawn_val
+        #             else:
+        #                 combs[comb_id] = comb_tag + drawn_val
+        #         else:
+        #             combs[comb_id] = comb_tag
+        #             # if "|" in row['value']:
+        #             #     combs[comb_id] = row['key'] + "=" + np.random.choice(row['value'].split("|"), 1)[0]
+        #             # else:
+        #             #     combs[comb_id] = row['key'] + "=" + row['value']
+        #
+        #         combs[comb_id] = curr_desc + "#" + combs[comb_id]
+        #
+        #     drawn_tags[di_id].extend(combs)
+        #
+        # obj_dict["props"] = drawn_tags[di_id]
 
         return properties
 
@@ -389,7 +404,6 @@ class QueryCombinationGenerator(object):
             entity_count = 0
             for di_id, drawn_idx in enumerate(draft_indices):
                 drawn_tag = drawn_tags[di_id]
-
                 obj_dict = dict()
                 if "|" in drawn_descriptors[
                     di_id]:  # In case an object has multiple descriptors, use both (this create more variance in generated natural sentences)
@@ -522,7 +536,6 @@ class QueryCombinationGenerator(object):
             entities = self.generate_entities(max_number_tags_per_query=4, max_number_of_props=4)
             area = self.generate_area(area_chance)
             relations = self.generate_relations(num_entities=len(entities))
-
             loc_points.append(LocPoint(area=area, entities=entities, relations=relations).dict())
         return loc_points
 
@@ -574,8 +587,7 @@ if __name__ == '__main__':
 
     query_comb_generator = QueryCombinationGenerator(geolocations_file_path=geolocations_file_path,
                                                      tag_list_path=tag_list_path,
-                                                     arbitrary_value_list_path=arbitrary_value_list_path,
-                                                     max_number_tags_per_query=max_number_tags_per_query)
+                                                     arbitrary_value_list_path=arbitrary_value_list_path)
 
     generated_combs = query_comb_generator.run(area_chance=area_chance,
                                                num_queries=num_samples)

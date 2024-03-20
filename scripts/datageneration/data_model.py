@@ -3,6 +3,14 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 
+# Tag Info
+class TagAttribute(BaseModel):
+    key: str = Field(description="Tag property key")
+    operator: str = Field(description="Tag property operator")
+    value: str = Field(description="Tag property value")
+
+
+# YAML Output
 class Area(BaseModel):
     type: str
     value: str

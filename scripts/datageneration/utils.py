@@ -1,6 +1,9 @@
-import json
 import itertools
+import json
 from typing import List
+
+SEPERATORS = ['=', '>']
+
 
 def write_output(generated_combs, output_file):
     with open(output_file, "w") as out_file:
@@ -10,7 +13,7 @@ def write_output(generated_combs, output_file):
 
 
 class CompoundTagAttributeProcessor:
-    def expand_list(self, tag_compounds: str)-> List[str]:
+    def expand_list(self, tag_compounds: str) -> List[str]:
         processed_tag_compounds = []
         tag_compounds = tag_compounds.split('|')
         for tag_compound in tag_compounds:
@@ -19,10 +22,20 @@ class CompoundTagAttributeProcessor:
                 processed_tag_compounds.append(tag_compound)
         return processed_tag_compounds
 
-    def run(self, tag_compounds) -> List[str]:
-        tag_compounds = tag_compounds.split('=')
-        tag_compounds_keys = tag_compounds[0]
-        tag_compounds_values = tag_compounds[1]
+    def run(self, tag_compounds: str) -> List[str]:
+        selected_seperator = None
+
+        for seperator in SEPERATORS:
+            _tag_compounds = tag_compounds.split(seperator)
+
+            if len(_tag_compounds) == 2:
+                tag_compounds_keys = _tag_compounds[0]
+                tag_compounds_values = _tag_compounds[1]
+                selected_seperator = seperator
+            else:
+                continue
+
+        assert selected_seperator
 
         if '[' in tag_compounds_keys:
             tag_compounds_keys = self.expand_list(tag_compounds_keys)
@@ -30,7 +43,13 @@ class CompoundTagAttributeProcessor:
         if '[' in tag_compounds_values:
             tag_compounds_values = self.expand_list(tag_compounds_values)
 
+        if isinstance(tag_compounds_values, str):
+            tag_compounds_values = [tag_compounds_values]
+
+        if isinstance(tag_compounds_keys, str):
+            tag_compounds_keys = [tag_compounds_keys]
+
         processed_tag_compounds = []
         for tag_key, tag_value in itertools.product(tag_compounds_keys, tag_compounds_values):
-            processed_tag_compounds.append(f'{tag_key}={tag_value}')
+            processed_tag_compounds.append(f'{tag_key.lower()}{selected_seperator}{tag_value.lower()}')
         return processed_tag_compounds

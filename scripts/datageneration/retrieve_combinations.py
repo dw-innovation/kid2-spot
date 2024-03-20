@@ -1,15 +1,18 @@
 import unicodedata
 from argparse import ArgumentParser
+from typing import List
 
 import pandas as pd
 import requests
 import taginfo.query as ti
+from datageneration.data_model import TagAttribute
+from datageneration.utils import CompoundTagAttributeProcessor, SEPERATORS
 from diskcache import Cache
 from tqdm import tqdm
 
 cache = Cache("tmp")
 
-TAG_INFO_API_ENDPOINT = "https://taginfo.openstreetmap.org/api/4/tag/combinations?key=TAG_KEY&value=TAG_VALUE"
+TAG_INFO_API_ENDPOINT = "https://taginfo.openstreetmap.org/api/4/tag/combinations?key=TAG_KEY&value=TAG_VALUE&filter=nodes&sortname=together_count&sortorder=desc"
 
 
 @cache.memoize()
@@ -76,6 +79,9 @@ def isRoman(s):
     return True
 
 
+comp_att_processor = CompoundTagAttributeProcessor()
+
+
 class CombinationRetriever(object):
     def __init__(self, source, num_examples):
         if source.endswith('xlsx'):
@@ -83,19 +89,50 @@ class CombinationRetriever(object):
         else:
             tag_df = pd.read_csv(source, index_col=False)
 
-        print(f"tag_df before duplicate {len(tag_df)}")
         tag_df.drop_duplicates(subset='descriptors', inplace=True)
-        print(f"tag_df after duplicate {len(tag_df)}")
-
         tag_df["index"] = [i for i in range(len(tag_df))]
 
         all_tags = {}
         for tag in tag_df.to_dict(orient='records'):
             all_tags[int(tag['index'])] = tag
 
+        all_osm_tags_and_attributes = self.process_tag_attributes(tag_df)
+        self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
         self.all_tags = all_tags
         self.tag_df = tag_df
         self.num_examples = num_examples
+
+    def process_tag_attributes(self, tag_df):
+        # all tags and attributes
+        all_osm_tags_and_attributes = {}
+        for tags in tag_df.to_dict(orient='records'):
+            tag_type = tags['type']
+            if isinstance(tag_type, float):
+                print(f'{tags} has no type, might be an invalid')
+                continue
+            tag_type = tag_type.strip()
+            for tag in tags['tags'].split(','):
+                tag = tag.lstrip().strip()
+                if 'AND' in tag:
+                    _tags = tag.split('AND')
+                    for _tag in _tags:
+                        _tag = _tag.lstrip().strip().replace(' ', '').lower()
+                        if _tag not in all_osm_tags_and_attributes.keys():
+                            all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'type': tag_type}
+                else:
+                    tag = tag.replace(' ', '').lower()
+                    if len(tag) == 0:
+                        continue
+
+                    if '[' in tag:
+                        compound_tag = comp_att_processor.run(tag)
+                        for alt_tag in compound_tag:
+                            if alt_tag not in all_osm_tags_and_attributes.keys():
+                                all_osm_tags_and_attributes[alt_tag] = {'tag': alt_tag, 'type': tag_type}
+                    else:
+                        if tag not in all_osm_tags_and_attributes.keys():
+                            all_osm_tags_and_attributes[tag] = {'tag': tag, 'type': tag_type}
+        return all_osm_tags_and_attributes
 
     def run(self, tag_list_file, arbitrary_value_list_file):
         '''
@@ -110,6 +147,8 @@ class CombinationRetriever(object):
         :param str tag_list_file: The path where the taglist file is saved
         :param list arbitrary_value_list_file: The path where the arbitrary value list is saved
         '''
+        # print('tag list file=====')
+        # print(tag_list_file)
         arbitrary_values = []
         bundle_list = self.tag_df.loc[
             (self.tag_df['type'] == 'core') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
@@ -119,11 +158,6 @@ class CombinationRetriever(object):
         tag_list = [tag.strip() for candidate in bundle_list for tag in candidate.split(",") if
                     not any(t in tag for t in ["*", "[", " AND "]) or any(
                         t in tag for t in ["***any***", "***numeric***"])]
-
-        # key_list = tag_df.loc[(tag_df['type'] == 'core') | (tag_df['type'] == 'core/attr'), 'key'].tolist()
-        # value_list = tag_df.loc[(tag_df['type'] == 'core') | (tag_df['type'] == 'core/attr'), 'value'].tolist()
-        # tag_list = ["{}={}".format(a, b) for a, b in zip(key_list, value_list)]
-
         bundle_list_arb = self.tag_df.loc[
             (self.tag_df['type'] == 'attr') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
 
@@ -133,11 +167,6 @@ class CombinationRetriever(object):
                                   t in tag for t in ["***any***", "***numeric***"])]
 
         arbitrary_tag_list = [tag.split("=")[0] + "=" for tag in arbitrary_tag_list]
-
-        # key_list_arb = tag_df.loc[(tag_df['type'] == 'attr') | (tag_df['type'] == 'core/attr'), 'key'].tolist()
-        # value_list_arb = tag_df.loc[(tag_df['type'] == 'attr') | (tag_df['type'] == 'core/attr'), 'value'].tolist()
-        # arbitrary_tag_list = ["{}=".format(a) for a, b in zip(key_list_arb, value_list_arb)]
-
         for idx, row in tqdm(self.all_tags.items(), total=len(self.all_tags)):
             associated_tags = [tag.strip() for tag in row['tags'].split(",") if
                                tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
@@ -152,8 +181,6 @@ class CombinationRetriever(object):
                     tag_key_value_pairs.append((pair.split('=')[0], pair.split('=')[1]))
                 elif '~' in pair:
                     tag_key_value_pairs.append((pair.split('~')[0], pair.split('~')[1]))
-
-            # tag_key_value_pairs = list(map(lambda pair: (pair.split('=')[0], pair.split('=')[1]), associated_tags))
 
             if row['type'] == 'core':
                 for tag_key, tag_value in tag_key_value_pairs:
@@ -186,7 +213,69 @@ class CombinationRetriever(object):
     def index_to_descriptors(self, index):
         return self.all_tags[index]['descriptors']
 
+    def request_related_tag_attributes(self, tag_key: str, tag_value: str, limit: str = 100) -> List[TagAttribute]:
+        combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)['data']
+        selected_attributes = set()
+        all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
+        for combination in combinations:
+            if len(selected_attributes) == limit:
+                print(f"Number of selected attributes {len(selected_attributes)}")
+                return list(selected_attributes)
+            for seperator in SEPERATORS:
+                other_tag = combination['other_key'] + seperator + combination['other_value']
+                print(f"Searching {other_tag}")
+                if other_tag in all_tags_attributes_ids:
+                    print(f"The tag {other_tag} in the list")
+                    other_tag_type = self.all_osm_tags_and_attributes[other_tag]['type']
+                    if other_tag_type == 'core':
+                        print(f"{other_tag} is filtered out, since its type is {other_tag_type}.")
+                    else:
+                        selected_attributes.add(self.all_osm_tags_and_attributes[other_tag]['tag'])
+                        print(f"{other_tag} is in our list and its type is {other_tag_type}.")
+                        continue
+                else:
+                    print(f"The tag {other_tag} is not in our list but maybe rephrased version might be in our list")
+                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), all_tags_attributes_ids))
+
+                    print("Number of results is ", len(results))
+                    if len(results) == 0:
+                        rewritten_tag = other_tag.split(seperator)[0]
+                        results = list(
+                            filter(lambda x: x.startswith(f"{rewritten_tag}{seperator}"), all_tags_attributes_ids))
+
+                        if len(results) == 0:
+                            print(f"No result found for {other_tag} even though rewritten tag is {rewritten_tag}")
+                            continue
+
+                        for result in results:
+                            print(f"Found result for {other_tag} which was rewritten as {rewritten_tag}")
+                            attribute_value = result
+                            other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
+                            if other_tag_type == 'core':
+                                print(f"{attribute_value} is a core, so we exclude.")
+                            else:
+                                selected_attributes.add(attribute_value)
+                                print(f"{attribute_value} is type of {other_tag_type}, we include it.")
+                        continue
+
+                    else:
+                        for result in results:
+                            print(f"Found result for {other_tag}")
+                            attribute_value = result
+                            other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
+                            if other_tag_type == 'core':
+                                print(f"{attribute_value} is a core, so we exclude.")
+                            else:
+                                selected_attributes.add(attribute_value)
+                                print(f"{attribute_value} is type of {other_tag_type}, we include it.")
+
+        print(f"Number of selected attributes {len(selected_attributes)}")
+        print(selected_attributes)
+        return list(selected_attributes)
+
     def assign_combinations(self, arbitrary_tag_list, tag_key, all_tags, tag_value):
+        print(tag_key)
+        print(tag_value)
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)
 
         if combinations['total'] == 0:
@@ -200,16 +289,6 @@ class CombinationRetriever(object):
             other_tag_arbitrary = combination['other_key'] + '='
 
             if other_tag in all_tags:
-                # ipek- this might be problematic for the initial tags unless there is bi-directional relationship
-                # i saw also one tag associated with cuisine: cuisine=coffee_shop, is it supposed to be there?
-                # matching_row = tag_df[
-                #     (tag_df['key'] == item['other_key']) & (tag_df['value'] == item['other_value'])]
-
-                ## the below value sometimes more than one, you take the first value if this is the case, but would it cause missing important ones? update: this causes error of not having cuisine
-                # matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
-                # corresponding_index = matching_row.index[0]
-
-                # ipek changes:
                 try:
                     matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
                 except ValueError as e:
@@ -219,11 +298,7 @@ class CombinationRetriever(object):
                 for matched_index in matching_row['index'].tolist():
                     filtered_combinations.append(matched_index)
 
-                # print(key, " - ", value, " - ", matching_row["tags"].values[0])
             elif other_tag_arbitrary in arbitrary_tag_list and isRoman(combination['other_value']):
-                # matching_row = tag_df[(tag_df['key'] == item['other_key'])]
-                # corresponding_index = matching_row.index[0]
-
                 try:
                     matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag_arbitrary)]
                 except ValueError as e:
@@ -253,12 +328,17 @@ if __name__ == '__main__':
     parser.add_argument('--tag_list', help='Path to save the tag list', required=True)
     parser.add_argument('--num_examples', help='Enter the number of examples to be fetched by taginfo', default=50)
     parser.add_argument('--arbitrary_value_list', help='Path to save the tag list', required=True)
+    parser.add_argument('--generate_tag_list_with_attributes', help='Generate tag list with attributes',
+                        action='store_true')
 
     args = parser.parse_args()
 
     source = args.source
     tag_list = args.tag_list
     arbitrary_value_list = args.arbitrary_value_list
+    generate_tag_list_with_attributes = args.generate_tag_list_with_attributes
 
-    CombinationRetriever(source=source, num_examples=args.num_examples).run(tag_list_file=tag_list,
-                                                                            arbitrary_value_list_file=arbitrary_value_list)
+    comb_retriever = CombinationRetriever(source=source, num_examples=args.num_examples)
+
+    if generate_tag_list_with_attributes:
+        comb_retriever.generate_tag_list_with_attributes()
