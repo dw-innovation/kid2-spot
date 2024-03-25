@@ -1,6 +1,14 @@
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
+
+
+# Tag Combinations
+class TagType(Enum):
+    CORE = 'core'
+    ATTR = 'attr'
+    CORE_ATTR = 'core/attr'
 
 
 # Tag Info
@@ -8,6 +16,32 @@ class TagAttribute(BaseModel):
     key: str = Field(description="Tag property key")
     operator: str = Field(description="Tag property operator")
     value: str = Field(description="Tag property value")
+
+def remove_duplicate_tag_attributes(tag_attributes):
+    processed_tag_attributes = []
+    attribute_keys = []
+
+    for tag_attribute in tag_attributes:
+        if str(tag_attribute) in attribute_keys:
+            continue
+        else:
+            attribute_keys.append(str(tag_attribute))
+            processed_tag_attributes.append(TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
+    return processed_tag_attributes
+
+
+class Tag(BaseModel):
+    key: str = Field(description="Tag property key")
+    operator: str = Field(description="Tag property operator")
+    value: str = Field(description="Tag property value")
+
+
+class TagCombination(BaseModel):
+    cluster_id: int = Field(description="Cluster Id")
+    descriptors: List[str] = Field(description="List of text names")
+    comb_type: TagType = Field(descripton="Tag type")
+    tags: List[Tag] = Field(description="tags in the combination")
+    tag_attributes: List[TagAttribute] = Field(description="List of tag attributes")
 
 
 # YAML Output

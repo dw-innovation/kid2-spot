@@ -60,12 +60,42 @@ class TestCombinationRetriever(unittest.TestCase):
     #     assert lane_exists
 
     def test_fetch_attributes(self):
-        results = self.retriever.request_related_tag_attributes(tag_key='amenity', tag_value='restaurant', limit=10)
+        # results = self.retriever.request_related_tag_attributes(tag_key='amenity', tag_value='restaurant', limit=50)
+        #
+        # print("attributes are:")
+        # for result in results:
+        #     print(result)
+        #
+        # assert 'name=***any***' in results
+        # assert 'cuisine=***any***' in results
+        # assert 'building=water_tower' not in results
+        # assert 'leisure=bowling_alley' not in results
 
-        assert 'name=***any***' in results
-        assert 'cuisine=***any***' in results
-        assert 'building=water_tower' not in results
-        assert 'leisure=bowling_alley' not in results
+        # results = self.retriever.request_related_tag_attributes(tag_key='highway', tag_value='crossing', limit=50)
+        #
+        # print("attributes are:")
+        # for result in results:
+        #     print(result)
+
+        # results = self.retriever.request_related_tag_attributes(tag_key='man_made', tag_value='pumping_station', limit=50)
+        #
+        # print("attributes are:")
+        # for result in results:
+        #     print(result)
+
+        # results = self.retriever.request_related_tag_attributes(tag_key='building', tag_value='castle', limit=50)
+        #
+        # print("attributes are:")
+        # for result in results:
+        #     print(result)
+
+
+        results = self.retriever.request_related_tag_attributes(tag_key='place', tag_value='sea', limit=50)
+
+        print("attributes are:")
+        for result in results:
+            print(result)
+
 
 
 

@@ -2,7 +2,7 @@ import itertools
 import json
 from typing import List
 
-SEPERATORS = ['=', '>']
+SEPERATORS = ['=', '>', '~']
 
 
 def write_output(generated_combs, output_file):
@@ -10,8 +10,6 @@ def write_output(generated_combs, output_file):
         for generated_comb in generated_combs:
             json.dump(generated_comb, out_file)
             out_file.write('\n')
-
-
 class CompoundTagAttributeProcessor:
     def expand_list(self, tag_compounds: str) -> List[str]:
         processed_tag_compounds = []
