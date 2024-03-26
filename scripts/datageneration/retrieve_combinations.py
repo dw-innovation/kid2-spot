@@ -4,9 +4,8 @@ from typing import List
 
 import pandas as pd
 import requests
-import taginfo.query as ti
 from datageneration.data_model import Tag, TagAttribute, TagCombination, remove_duplicate_tag_attributes
-from datageneration.utils import CompoundTagAttributeProcessor, SEPERATORS
+from datageneration.utils import CompoundTagAttributeProcessor, SEPERATORS, write_output
 from diskcache import Cache
 from tqdm import tqdm
 
@@ -100,7 +99,7 @@ def split_tags(tags: str) -> List[TagAttribute]:
 
 
 class CombinationRetriever(object):
-    def __init__(self, source, num_examples, att_limit):
+    def __init__(self, source, att_limit):
         if source.endswith('xlsx'):
             tag_df = pd.read_excel(source, engine='openpyxl')
         else:
@@ -112,8 +111,6 @@ class CombinationRetriever(object):
         self.tag_df = tag_df
         self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
         self.att_limit = att_limit
-
-        self.num_examples = num_examples
 
     def process_tag_attributes(self, tag_df):
         # all tags and attributes
@@ -129,81 +126,81 @@ class CombinationRetriever(object):
                 all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'type': tag_type}
         return all_osm_tags_and_attributes
 
-    def run(self, tag_list_file, arbitrary_value_list_file):
-        '''
-        Check if a given string only contains english characters. This is meant to filter out values of the name tag
-        in different languages. For tags that can have any arbitrary value (e.g. "name") or attribute tags with many
-        categorical values (e.g. building:material), a list of possible (example) values is saved as a separate file.
-
-        IMPORTANT: The language limitation should be reworked and adapted in the final database, as more characters
-        should be searchable. It should still be discussed what to do with entirely different alphabets.
-
-        :param str source: The path to the source CSV file containing the tag information
-        :param str tag_list_file: The path where the taglist file is saved
-        :param list arbitrary_value_list_file: The path where the arbitrary value list is saved
-        '''
-        # print('tag list file=====')
-        # print(tag_list_file)
-        arbitrary_values = []
-        bundle_list = self.tag_df.loc[
-            (self.tag_df['type'] == 'core') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
-
-        # print(bundle_list)
-
-        tag_list = [tag.strip() for candidate in bundle_list for tag in candidate.split(",") if
-                    not any(t in tag for t in ["*", "[", " AND "]) or any(
-                        t in tag for t in ["***any***", "***numeric***"])]
-        bundle_list_arb = self.tag_df.loc[
-            (self.tag_df['type'] == 'attr') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
-
-        # what is difference between tag list and arbitrary tag list
-        arbitrary_tag_list = [tag.strip() for candidate in bundle_list_arb for tag in candidate.split(",") if
-                              not any(t in tag for t in ["*", "[", " AND "]) or any(
-                                  t in tag for t in ["***any***", "***numeric***"])]
-
-        arbitrary_tag_list = [tag.split("=")[0] + "=" for tag in arbitrary_tag_list]
-        for idx, row in tqdm(self.all_tags.items(), total=len(self.all_tags)):
-            associated_tags = [tag.strip() for tag in row['tags'].split(",") if
-                               tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
-
-            if len(associated_tags) == 0:
-                print(f"No assocated tags found for {row['descriptors']}")
-                continue
-
-            tag_key_value_pairs = []
-            for pair in associated_tags:
-                if '=' in pair:
-                    tag_key_value_pairs.append((pair.split('=')[0], pair.split('=')[1]))
-                elif '~' in pair:
-                    tag_key_value_pairs.append((pair.split('~')[0], pair.split('~')[1]))
-
-            if row['type'] == 'core':
-                for tag_key, tag_value in tag_key_value_pairs:
-                    combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
-
-                    if combinations:
-                        self.tag_df.at[row['index'], 'combinations'] = combinations
-            else:
-                for tag_key, tag_value in tag_key_value_pairs:
-                    if tag_value == "***any***":
-                        arbitrary_value_list = []
-                        for i in range(1,
-                                       self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
-                            value_list = ti.get_page_of_key_values(tag_key, i)
-                            for tag_value in value_list:
-                                if isRoman(tag_value['value']):
-                                    arbitrary_value_list.append(tag_value['value'])
-
-                        arbitrary_values.append(
-                            {"key": tag_key, "value_list": [tag_key, '|'.join(arbitrary_value_list)]})
-
-                    elif "|" in tag_value:
-                        arbitrary_values.append(
-                            {"key": tag_key, "value_list": tag_value})
-
-        self.tag_df.to_csv(tag_list_file, index=False)
-        pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file, index=False)
-        print("Saved all files!")
+    # def run(self, tag_list_file, arbitrary_value_list_file):
+    #     '''
+    #     Check if a given string only contains english characters. This is meant to filter out values of the name tag
+    #     in different languages. For tags that can have any arbitrary value (e.g. "name") or attribute tags with many
+    #     categorical values (e.g. building:material), a list of possible (example) values is saved as a separate file.
+    #
+    #     IMPORTANT: The language limitation should be reworked and adapted in the final database, as more characters
+    #     should be searchable. It should still be discussed what to do with entirely different alphabets.
+    #
+    #     :param str source: The path to the source CSV file containing the tag information
+    #     :param str tag_list_file: The path where the taglist file is saved
+    #     :param list arbitrary_value_list_file: The path where the arbitrary value list is saved
+    #     '''
+    #     # print('tag list file=====')
+    #     # print(tag_list_file)
+    #     arbitrary_values = []
+    #     bundle_list = self.tag_df.loc[
+    #         (self.tag_df['type'] == 'core') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
+    #
+    #     # print(bundle_list)
+    #
+    #     tag_list = [tag.strip() for candidate in bundle_list for tag in candidate.split(",") if
+    #                 not any(t in tag for t in ["*", "[", " AND "]) or any(
+    #                     t in tag for t in ["***any***", "***numeric***"])]
+    #     bundle_list_arb = self.tag_df.loc[
+    #         (self.tag_df['type'] == 'attr') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
+    #
+    #     # what is difference between tag list and arbitrary tag list
+    #     arbitrary_tag_list = [tag.strip() for candidate in bundle_list_arb for tag in candidate.split(",") if
+    #                           not any(t in tag for t in ["*", "[", " AND "]) or any(
+    #                               t in tag for t in ["***any***", "***numeric***"])]
+    #
+    #     arbitrary_tag_list = [tag.split("=")[0] + "=" for tag in arbitrary_tag_list]
+    #     for idx, row in tqdm(self.all_tags.items(), total=len(self.all_tags)):
+    #         associated_tags = [tag.strip() for tag in row['tags'].split(",") if
+    #                            tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
+    #
+    #         if len(associated_tags) == 0:
+    #             print(f"No assocated tags found for {row['descriptors']}")
+    #             continue
+    #
+    #         tag_key_value_pairs = []
+    #         for pair in associated_tags:
+    #             if '=' in pair:
+    #                 tag_key_value_pairs.append((pair.split('=')[0], pair.split('=')[1]))
+    #             elif '~' in pair:
+    #                 tag_key_value_pairs.append((pair.split('~')[0], pair.split('~')[1]))
+    #
+    #         if row['type'] == 'core':
+    #             for tag_key, tag_value in tag_key_value_pairs:
+    #                 combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
+    #
+    #                 if combinations:
+    #                     self.tag_df.at[row['index'], 'combinations'] = combinations
+    #         else:
+    #             for tag_key, tag_value in tag_key_value_pairs:
+    #                 if tag_value == "***any***":
+    #                     arbitrary_value_list = []
+    #                     for i in range(1,
+    #                                    self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
+    #                         value_list = ti.get_page_of_key_values(tag_key, i)
+    #                         for tag_value in value_list:
+    #                             if isRoman(tag_value['value']):
+    #                                 arbitrary_value_list.append(tag_value['value'])
+    #
+    #                     arbitrary_values.append(
+    #                         {"key": tag_key, "value_list": [tag_key, '|'.join(arbitrary_value_list)]})
+    #
+    #                 elif "|" in tag_value:
+    #                     arbitrary_values.append(
+    #                         {"key": tag_key, "value_list": tag_value})
+    #
+    #     self.tag_df.to_csv(tag_list_file, index=False)
+    #     pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file, index=False)
+    #     print("Saved all files!")
 
     def index_to_descriptors(self, index):
         return self.all_tags[index]['descriptors']
@@ -254,50 +251,6 @@ class CombinationRetriever(object):
                                                  value=attribute_value_split[1]))
         return selected_attributes
 
-    def assign_combinations(self, arbitrary_tag_list, tag_key, all_tags, tag_value):
-        print(tag_key)
-        print(tag_value)
-        combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)
-
-        if combinations['total'] == 0:
-            return None
-
-        filtered_combinations = []
-        for combination in combinations[
-            'data']:  # Search the possible combinations, if they are also part of the local tag database, append them as possible combinations
-
-            other_tag = combination['other_key'] + '=' + combination['other_value']
-            other_tag_arbitrary = combination['other_key'] + '='
-
-            if other_tag in all_tags:
-                try:
-                    matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag)]
-                except ValueError as e:
-                    print(f"combination: {combination}, other tag {other_tag} got an exception: {e}")
-                    continue
-
-                for matched_index in matching_row['index'].tolist():
-                    filtered_combinations.append(matched_index)
-
-            elif other_tag_arbitrary in arbitrary_tag_list and isRoman(combination['other_value']):
-                try:
-                    matching_row = self.tag_df[self.tag_df['tags'].str.contains(other_tag_arbitrary)]
-                except ValueError as e:
-                    print(f"combination: {combination}, other tag {other_tag_arbitrary} got an exception: {e}")
-                    continue
-
-                # ipek changes:
-                for matched_index in matching_row['index'].tolist():
-                    filtered_combinations.append(matched_index)
-
-                # print(key, " - ", value, " - ", matching_row["tags"].values[0])
-        if len(filtered_combinations) > 0:
-            filtered_combinations = list(set(filtered_combinations))
-            string_combination = '|'.join(str(number) for number in filtered_combinations)
-            return string_combination
-
-        return None
-
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:
         tag_combinations = []
 
@@ -324,7 +277,6 @@ class CombinationRetriever(object):
             tag_combinations.append(
                 TagCombination(cluster_id=cluster_id, descriptors=descriptors, comb_type=comb_type, tags=processed_tags,
                                tag_attributes=tag_attributes))
-        print(tag_combinations)
         return tag_combinations
 
 
@@ -335,22 +287,20 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('--source', help='domain-specific primary keys', required=True)
-    parser.add_argument('--tag_list', help='Path to save the tag list', required=True)
+    parser.add_argument('--output_file', help='Path to save the tag list', required=True)
     parser.add_argument('--att_limit', help='Enter the number of examples to be fetched by taginfo', default=100)
-    parser.add_argument('--num_examples', help='Enter the number of examples to be fetched by taginfo', default=100)
-    parser.add_argument('--arbitrary_value_list', help='Path to save the tag list', required=True)
     parser.add_argument('--generate_tag_list_with_attributes', help='Generate tag list with attributes',
                         action='store_true')
 
     args = parser.parse_args()
 
     source = args.source
-    tag_list = args.tag_list
     att_limit = args.att_limit
-    arbitrary_value_list = args.arbitrary_value_list
+    output_file = args.output_file
     generate_tag_list_with_attributes = args.generate_tag_list_with_attributes
 
-    comb_retriever = CombinationRetriever(source=source, num_examples=args.num_examples, att_limit=att_limit)
+    comb_retriever = CombinationRetriever(source=source, att_limit=att_limit)
 
     if generate_tag_list_with_attributes:
-        comb_retriever.generate_tag_list_with_attributes()
+        tag_combinations = comb_retriever.generate_tag_list_with_attributes()
+        write_output(generated_combs=tag_combinations, output_file=output_file)

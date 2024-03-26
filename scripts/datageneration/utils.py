@@ -8,7 +8,7 @@ SEPERATORS = ['=', '>', '~']
 def write_output(generated_combs, output_file):
     with open(output_file, "w") as out_file:
         for generated_comb in generated_combs:
-            json.dump(generated_comb, out_file)
+            json.dump(generated_comb.model_dump(mode="json"), out_file)
             out_file.write('\n')
 class CompoundTagAttributeProcessor:
     def expand_list(self, tag_compounds: str) -> List[str]:
