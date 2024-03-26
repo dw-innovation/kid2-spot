@@ -9,7 +9,8 @@ Execute it as follows: python -m datageneration.tests.test_retrieve_combination
 
 class TestCombinationRetriever(unittest.TestCase):
     def setUp(self):
-        self.retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_test.xlsx', num_examples=100)
+        self.retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_test.xlsx',
+                                              att_limit=100)
 
     # def test_assign_combination(self):
     #     arbitrary_tag_list = ['cuisine=', 'building:levels=', 'building:material=', 'height=', 'footway=', 'footway=',
@@ -60,44 +61,17 @@ class TestCombinationRetriever(unittest.TestCase):
     #     assert lane_exists
 
     def test_fetch_attributes(self):
-        # results = self.retriever.request_related_tag_attributes(tag_key='amenity', tag_value='restaurant', limit=50)
-        #
-        # print("attributes are:")
-        # for result in results:
-        #     print(result)
-        #
-        # assert 'name=***any***' in results
-        # assert 'cuisine=***any***' in results
-        # assert 'building=water_tower' not in results
-        # assert 'leisure=bowling_alley' not in results
-
-        # results = self.retriever.request_related_tag_attributes(tag_key='highway', tag_value='crossing', limit=50)
-        #
-        # print("attributes are:")
-        # for result in results:
-        #     print(result)
-
-        # results = self.retriever.request_related_tag_attributes(tag_key='man_made', tag_value='pumping_station', limit=50)
-        #
-        # print("attributes are:")
-        # for result in results:
-        #     print(result)
-
-        # results = self.retriever.request_related_tag_attributes(tag_key='building', tag_value='castle', limit=50)
-        #
-        # print("attributes are:")
-        # for result in results:
-        #     print(result)
-
-
-        results = self.retriever.request_related_tag_attributes(tag_key='place', tag_value='sea', limit=50)
+        results = self.retriever.request_related_tag_attributes(tag_key='amenity', tag_value='restaurant', limit=50)
 
         print("attributes are:")
+        processed_results = []
         for result in results:
-            print(result)
+            processed_results.append(f'{result.key}{result.operator}{result.value}')
 
-
-
+        assert 'name=***any***' in processed_results
+        assert 'cuisine=***any***' in processed_results
+        assert 'building=water_tower' not in processed_results
+        assert 'leisure=bowling_alley' not in processed_results
 
 if __name__ == '__main__':
     unittest.main()
