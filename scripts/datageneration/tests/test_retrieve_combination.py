@@ -11,6 +11,7 @@ class TestCombinationRetriever(unittest.TestCase):
     def setUp(self):
         self.retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_test.xlsx',
                                               att_limit=100)
+
     def test_fetch_attributes(self):
         results = self.retriever.request_related_tag_attributes(tag_key='amenity', tag_value='restaurant', limit=50)
 
@@ -23,6 +24,12 @@ class TestCombinationRetriever(unittest.TestCase):
         assert 'cuisine=***any***' in processed_results
         assert 'building=water_tower' not in processed_results
         assert 'leisure=bowling_alley' not in processed_results
+
+    def test_generate_attribute_examples(self):
+        cuisine_examples = self.retriever.request_attribute_examples(attribute_key='cuisine', num_examples=100)
+        assert len(cuisine_examples) == 100
+        assert ';' not in cuisine_examples
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -17,6 +17,7 @@ class TagAttribute(BaseModel):
     operator: str = Field(description="Tag property operator")
     value: str = Field(description="Tag property value")
 
+
 def remove_duplicate_tag_attributes(tag_attributes):
     processed_tag_attributes = []
     attribute_keys = []
@@ -26,7 +27,8 @@ def remove_duplicate_tag_attributes(tag_attributes):
             continue
         else:
             attribute_keys.append(str(tag_attribute))
-            processed_tag_attributes.append(TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
+            processed_tag_attributes.append(
+                TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
     return processed_tag_attributes
 
 
@@ -44,6 +46,11 @@ class TagCombination(BaseModel):
     tag_attributes: List[TagAttribute] = Field(description="List of tag attributes")
 
 
+class TagAttributeExample(BaseModel):
+    key: str
+    examples: List[str]
+
+
 # YAML Output
 class Area(BaseModel):
     type: str
@@ -52,7 +59,7 @@ class Area(BaseModel):
 
 class Property(BaseModel):
     name: str
-    operator: str = Field(description='It is = for non-numerical properties, For other values, it can be =,<,>')
+    operator: str = Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
     value: str
 
 

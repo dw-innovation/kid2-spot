@@ -5,7 +5,8 @@ from typing import List
 import pandas as pd
 import requests
 import taginfo.query as ti
-from datageneration.data_model import Tag, TagAttribute, TagCombination, remove_duplicate_tag_attributes
+from datageneration.data_model import Tag, TagAttribute, TagCombination, TagAttributeExample, \
+    remove_duplicate_tag_attributes
 from datageneration.utils import CompoundTagAttributeProcessor, SEPERATORS, write_output
 from diskcache import Cache
 from tqdm import tqdm
@@ -67,6 +68,7 @@ comp_att_processor = CompoundTagAttributeProcessor()
 
 
 def split_descriptors(descriptors: str) -> List[str]:
+    '''this function splits the descriptors as a list of single descriptor'''
     processed_descriptors = set()
 
     for descriptor in descriptors.split('|'):
@@ -77,6 +79,7 @@ def split_descriptors(descriptors: str) -> List[str]:
 
 
 def split_tags(tags: str) -> List[TagAttribute]:
+    '''this function splits the compound tags. it uses comp_attr_process for handling complex compounds such as highway'''
     processed_tags = set()
     for tag in tags.split(','):
         tag = tag.lstrip().strip()
@@ -114,6 +117,15 @@ class CombinationRetriever(object):
         self.att_limit = att_limit
 
     def process_tag_attributes(self, tag_df):
+        """
+        Process tags, attributes from a DataFrame (PrimaryKey table).
+
+        Args:
+            tag_df (DataFrame): DataFrame containing tag attributes.
+
+        Returns:
+            dict: Dictionary containing processed tag attributes.
+        """
         # all tags and attributes
         all_osm_tags_and_attributes = {}
         for tags in tag_df.to_dict(orient='records'):
@@ -124,87 +136,76 @@ class CombinationRetriever(object):
             tag_type = tag_type.strip()
             splited_tags = split_tags(tags['tags'])
             for _tag in splited_tags:
-                all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'type': tag_type}
+                _tag_splits = None
+                tag_operator = None
+                for seperator in SEPERATORS:
+                    if seperator in _tag:
+                        _tag_splits = _tag.split(seperator)
+                        tag_operator = seperator
+                        continue
+
+                all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0], 'operator': tag_operator,
+                                                     'value': _tag_splits[1], 'type': tag_type}
         return all_osm_tags_and_attributes
 
-    def generate_attribute_examples(self):
-        '''
-        Check if a given string only contains english characters. This is meant to filter out values of the name tag
-        in different languages. For tags that can have any arbitrary value (e.g. "name") or attribute tags with many
-        categorical values (e.g. building:material), a list of possible (example) values is saved as a separate file.
+    def request_attribute_examples(self, attribute_key: str, num_examples: int) -> List[str]:
+        """
+        It is a helper function for generate_attribute_examples. Retrieve examples of attribute keys. For example: cuisine -> italian, turkish, etc.
 
-        IMPORTANT: The language limitation should be reworked and adapted in the final database, as more characters
-        should be searchable. It should still be discussed what to do with entirely different alphabets.
+        Args:
+            attribute_key (str): The key of the attribute for which examples are requested.
+            num_examples (int): The number of examples to retrieve.
 
-        :param str source: The path to the source CSV file containing the tag information
-        :param str tag_list_file: The path where the taglist file is saved
-        :param list arbitrary_value_list_file: The path where the arbitrary value list is saved
-        '''
-        # print('tag list file=====')
-        # print(tag_list_file)
-        arbitrary_values = []
-        bundle_list = self.tag_df.loc[
-            (self.tag_df['type'] == 'core') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
+        Returns:
+            List[str]: A list of attribute examples.
 
-        # print(bundle_list)
+        This method fetches examples associated with the non-numerical attributes from TagInfo API. It retrieves examples recursively page by page until the number of examples are equal to the threshold. The examples
+        are split by semicolons (';'), and only examples that pass the 'isRoman' function
+        check are included.
+        """
 
-        tag_list = [tag.strip() for candidate in bundle_list for tag in candidate.split(",") if
-                    not any(t in tag for t in ["*", "[", " AND "]) or any(
-                        t in tag for t in ["***any***", "***numeric***"])]
-        bundle_list_arb = self.tag_df.loc[
-            (self.tag_df['type'] == 'attr') | (self.tag_df['type'] == 'core/attr'), 'tags'].tolist()
+        def fetch_examples_recursively(curr_page, fetched_examples):
+            examples = ti.get_page_of_key_values(attribute_key, curr_page)
+            if len(examples) == 0:
+                return fetched_examples
+            for example in examples:
+                example = example['value']
+                for _example in example.split(';'):
+                    if len(fetched_examples) > num_examples:
+                        return fetched_examples
+                    if isRoman(_example):
+                        fetched_examples.add(_example)
+            # Fetch next page recursively
+            return fetch_examples_recursively(curr_page + 1, fetched_examples)
 
-        # what is difference between tag list and arbitrary tag list
-        arbitrary_tag_list = [tag.strip() for candidate in bundle_list_arb for tag in candidate.split(",") if
-                              not any(t in tag for t in ["*", "[", " AND "]) or any(
-                                  t in tag for t in ["***any***", "***numeric***"])]
+        fetched_examples = set()
+        fetched_examples = fetch_examples_recursively(1, fetched_examples)
+        return list(fetched_examples)
 
-        arbitrary_tag_list = [tag.split("=")[0] + "=" for tag in arbitrary_tag_list]
-        for idx, row in tqdm(self.all_tags.items(), total=len(self.all_tags)):
-            associated_tags = [tag.strip() for tag in row['tags'].split(",") if
-                               tag.strip()]  # if not any(t in tag for t in ["*", "[", " AND "]) or any(t in tag for t in ["***any***", "***numeric***"])
+    def generate_attribute_examples(self, num_examples: int = 100) -> List[TagAttributeExample]:
+        """
+        Generate attribute examples for each tags whose type is 'attr' or 'core/attr'.
 
-            if len(associated_tags) == 0:
-                print(f"No assocated tags found for {row['descriptors']}")
-                continue
+        Args:
+            num_examples (int): Number of examples to generate for each attribute (default is 100).
 
-            tag_key_value_pairs = []
-            for pair in associated_tags:
-                if '=' in pair:
-                    tag_key_value_pairs.append((pair.split('=')[0], pair.split('=')[1]))
-                elif '~' in pair:
-                    tag_key_value_pairs.append((pair.split('~')[0], pair.split('~')[1]))
+        Returns:
+            List[TagAttributeExample]: List of TagAttributeExample objects containing attribute keys and their examples.
 
-            if row['type'] == 'core':
-                for tag_key, tag_value in tag_key_value_pairs:
-                    combinations = self.assign_combinations(arbitrary_tag_list, tag_key, tag_list, tag_value)
+        This method generates examples for specific tag attributes based on predefined criteria.
+        It iterates through all tag attributes and retrieves examples using the `request_attribute_examples`
+        method. Examples are only generated for tag attributes with type other than 'core' and having the value
+        'numerical'. TagAttributeExample objects are created for each attribute along with their examples,
+        which are then returned as a list.
 
-                    if combinations:
-                        self.tag_df.at[row['index'], 'combinations'] = combinations
-            else:
-                for tag_key, tag_value in tag_key_value_pairs:
-                    if tag_value == "***any***":
-                        arbitrary_value_list = []
-                        for i in range(1,
-                                       self.num_examples):  # Currently limit the collection of values for e.g. "name" to 6 pages, as retrieving all might take forever
-                            value_list = ti.get_page_of_key_values(tag_key, i)
-                            for tag_value in value_list:
-                                if isRoman(tag_value['value']):
-                                    arbitrary_value_list.append(tag_value['value'])
-
-                        arbitrary_values.append(
-                            {"key": tag_key, "value_list": [tag_key, '|'.join(arbitrary_value_list)]})
-
-                    elif "|" in tag_value:
-                        arbitrary_values.append(
-                            {"key": tag_key, "value_list": tag_value})
-
-        self.tag_df.to_csv(tag_list_file, index=False)
-        pd.DataFrame(arbitrary_values).to_csv(arbitrary_value_list_file, index=False)
-        print("Saved all files!")
-
-    def index_to_descriptors(self, index):
-        return self.all_tags[index]['descriptors']
+        """
+        attributes_and_their_examples = []
+        for key, value in self.all_osm_tags_and_attributes.items():
+            if value['type'] != 'core' and '=***any***' in key:
+                examples = self.request_attribute_examples(value['key'], num_examples=num_examples)
+                attributes_and_their_examples.append(
+                    TagAttributeExample(key=key, examples=examples))
+        return attributes_and_their_examples
 
     def request_related_tag_attributes(self, tag_key: str, tag_value: str, limit: str = 100) -> List[TagAttribute]:
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)['data']
@@ -253,6 +254,13 @@ class CombinationRetriever(object):
         return selected_attributes
 
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:
+        """
+        Generates a list of TagCombination objects with associated attributes. Given core osm tag, it fetches the associated combinations. Next, the combinations with a type of "core" are discarded.
+
+        Returns:
+            List[TagCombination]: A list of TagCombination objects containing cluster ID, descriptors,
+                                  combination type, tags, and tag attributes.
+        """
         tag_combinations = []
 
         for row in tqdm(self.tag_df.to_dict(orient='records'), total=len(self.tag_df)):
@@ -260,7 +268,7 @@ class CombinationRetriever(object):
             descriptors = split_descriptors(row['descriptors'])
             comb_type = row['type'].strip()
             tags = split_tags(row['tags'])
-            if comb_type != 'attr':
+            if 'attr' not in comb_type:
                 processed_tags = []
                 processed_attributes = []
                 for tag in tags:
@@ -290,6 +298,7 @@ if __name__ == '__main__':
     parser.add_argument('--source', help='domain-specific primary keys', required=True)
     parser.add_argument('--output_file', help='Path to save the tag list', required=True)
     parser.add_argument('--att_limit', help='Enter the number of examples to be fetched by taginfo', default=100)
+    parser.add_argument('--att_example_limit', help='Enter the number of examples of the attributes', default=100)
     parser.add_argument('--generate_tag_list_with_attributes', help='Generate tag list with attributes',
                         action='store_true')
     parser.add_argument('--generate_attribute_examples', help='Generate attribute examples',
@@ -299,6 +308,7 @@ if __name__ == '__main__':
 
     source = args.source
     att_limit = args.att_limit
+    att_example_limit = args.att_example_limit
     output_file = args.output_file
     generate_tag_list_with_attributes = args.generate_tag_list_with_attributes
     generate_attribute_examples = args.generate_attribute_examples
@@ -310,4 +320,5 @@ if __name__ == '__main__':
         write_output(generated_combs=tag_combinations, output_file=output_file)
 
     if generate_attribute_examples:
-        att_examples = comb_retriever.generate_attribute_examples()
+        att_examples = comb_retriever.generate_attribute_examples(num_examples=att_example_limit)
+        write_output(generated_combs=att_examples, output_file=output_file)
