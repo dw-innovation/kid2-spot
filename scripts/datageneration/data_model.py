@@ -58,7 +58,7 @@ class Area(BaseModel):
 
 
 class Property(BaseModel):
-    name: str
+    key: str
     operator: str = Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
     value: str
 
