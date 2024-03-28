@@ -47,7 +47,10 @@ class CompoundTagAttributeProcessor:
         if isinstance(tag_compounds_keys, str):
             tag_compounds_keys = [tag_compounds_keys]
 
+
+
         processed_tag_compounds = []
         for tag_key, tag_value in itertools.product(tag_compounds_keys, tag_compounds_values):
             processed_tag_compounds.append(f'{tag_key.lower()}{selected_seperator}{tag_value.lower()}')
+
         return processed_tag_compounds
