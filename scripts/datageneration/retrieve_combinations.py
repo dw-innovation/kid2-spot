@@ -151,7 +151,7 @@ class CombinationRetriever(object):
                                                              'value': _tag_splits[1], 'type': "core/attr"}
                 else:
                     all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0], 'operator': tag_operator,
-                                                     'value': _tag_splits[1], 'type': tag_type}
+                                                         'value': _tag_splits[1], 'type': tag_type}
 
         return all_osm_tags_and_attributes
 
@@ -178,7 +178,7 @@ class CombinationRetriever(object):
             for example in examples:
                 example = example['value']
                 for _example in example.split(';'):
-                    if len(fetched_examples) > num_examples-1:
+                    if len(fetched_examples) > num_examples - 1:
                         return fetched_examples
                     if isRoman(_example):
                         fetched_examples.add(_example)
@@ -221,7 +221,7 @@ class CombinationRetriever(object):
         numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
                                                                        all_tags_attributes_ids)]
         for combination in combinations:
-            if len(selected_attributes) == limit-1:
+            if len(selected_attributes) == limit - 1:
                 return list(selected_attributes)
             for seperator in SEPERATORS:
                 other_tag = combination['other_key'] + seperator + combination['other_value']
