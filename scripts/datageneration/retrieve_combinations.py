@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 cache = Cache("tmp")
 
-TAG_INFO_API_ENDPOINT = "https://taginfo.openstreetmap.org/api/4/tag/combinations?key=TAG_KEY&value=TAG_VALUE&filter=nodes&sortname=together_count&sortorder=desc"
+TAG_INFO_API_ENDPOINT = "https://taginfo.openstreetmap.org/api/4/tag/combinations?key=TAG_KEY&value=TAG_VALUE&sortname=together_count&sortorder=desc"
 
 
 @cache.memoize()
@@ -116,6 +116,10 @@ class CombinationRetriever(object):
         self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
         self.att_limit = att_limit
 
+        self.all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
+        self.numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
+                                                                       self.all_tags_attributes_ids)]
+
     def process_tag_attributes(self, tag_df):
         """
         Process tags, attributes from a DataFrame (PrimaryKey table).
@@ -144,8 +148,15 @@ class CombinationRetriever(object):
                         tag_operator = seperator
                         continue
 
-                all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0], 'operator': tag_operator,
-                                                     'value': _tag_splits[1], 'type': tag_type}
+                if _tag in all_osm_tags_and_attributes:
+                    if all_osm_tags_and_attributes[_tag]["type"] != tag_type:
+                        all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0],
+                                                             'operator': tag_operator,
+                                                             'value': _tag_splits[1], 'type': "core/attr"}
+                else:
+                    all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0], 'operator': tag_operator,
+                                                         'value': _tag_splits[1], 'type': tag_type}
+
         return all_osm_tags_and_attributes
 
     def request_attribute_examples(self, attribute_key: str, num_examples: int) -> List[str]:
@@ -171,7 +182,7 @@ class CombinationRetriever(object):
             for example in examples:
                 example = example['value']
                 for _example in example.split(';'):
-                    if len(fetched_examples) > num_examples:
+                    if len(fetched_examples) > num_examples - 1:
                         return fetched_examples
                     if isRoman(_example):
                         fetched_examples.add(_example)
@@ -210,43 +221,56 @@ class CombinationRetriever(object):
     def request_related_tag_attributes(self, tag_key: str, tag_value: str, limit: str = 100) -> List[TagAttribute]:
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)['data']
         selected_attributes = []
-        all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
         for combination in combinations:
             if len(selected_attributes) == limit:
                 return list(selected_attributes)
             for seperator in SEPERATORS:
                 other_tag = combination['other_key'] + seperator + combination['other_value']
-                if other_tag in all_tags_attributes_ids:
+
+                if other_tag in self.all_tags_attributes_ids:
                     other_tag_type = self.all_osm_tags_and_attributes[other_tag]['type']
-                    if other_tag_type == 'attr':
+                    if 'attr' in other_tag_type:
                         selected_attribute = self.all_osm_tags_and_attributes[other_tag]['tag']
                         selected_attribute_split = selected_attribute.split(seperator)
                         selected_attributes.append(TagAttribute(key=selected_attribute_split[0], operator=seperator,
-                                                                value=selected_attribute[1]))
+                                                                value=selected_attribute_split[1]))
                         continue
                 else:
-                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), all_tags_attributes_ids))
+                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), self.all_tags_attributes_ids))
                     if len(results) == 0:
-                        rewritten_tag = other_tag.split(seperator)[0]
+                        rewritten_tag = ""
+                        if (combination['other_key'] in self.numeric_tags_attributes_ids and
+                                combination['other_value'].isnumeric()):
+                            if int(combination['other_value']) > 0:
+                                rewritten_tag = combination['other_key'] + ">0"
+                        if rewritten_tag == "":
+                            rewritten_tag = combination['other_key'] + seperator
+
                         results = list(
-                            filter(lambda x: x.startswith(f"{rewritten_tag}{seperator}"), all_tags_attributes_ids))
+                            filter(lambda x: x.startswith(rewritten_tag), self.all_tags_attributes_ids))
 
                         if len(results) >= 0:
                             for result in results:
                                 attribute_value = result
                                 other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
-                                if other_tag_type == 'attr':
-                                    attribute_value_split = attribute_value.split(seperator)
-                                    selected_attributes.append(
-                                        TagAttribute(key=attribute_value_split[0], operator=seperator,
-                                                     value=attribute_value_split[1]))
+                                if 'attr' in other_tag_type:
+                                    if ">0" in attribute_value[-2:]:
+                                        attribute_value_split = attribute_value.split(">")
+                                        selected_attributes.append(
+                                            TagAttribute(key=attribute_value_split[0], operator=">",
+                                                         value="0"))
+                                    else:
+                                        attribute_value_split = attribute_value.split(seperator)
+                                        selected_attributes.append(
+                                            TagAttribute(key=attribute_value_split[0], operator=seperator,
+                                                         value=attribute_value_split[1]))
                             continue
 
                     else:
                         for result in results:
                             attribute_value = result
                             other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
-                            if other_tag_type == 'attr':
+                            if 'attr' in other_tag_type:
                                 attribute_value_split = attribute_value.split(seperator)
                                 selected_attributes.append(
                                     TagAttribute(key=attribute_value_split[0], operator=seperator,
@@ -255,7 +279,8 @@ class CombinationRetriever(object):
 
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:
         """
-        Generates a list of TagCombination objects with associated attributes. Given core osm tag, it fetches the associated combinations. Next, the combinations with a type of "core" are discarded.
+        Generates a list of TagCombination objects with associated attributes. Given core osm tag, it fetches the
+        associated combinations. Next, the combinations with a type of "core" are discarded.
 
         Returns:
             List[TagCombination]: A list of TagCombination objects containing cluster ID, descriptors,
@@ -282,10 +307,10 @@ class CombinationRetriever(object):
                                                                                  limit=self.att_limit)
                             processed_attributes.extend(tag_attributes)
 
-            tag_attributes = remove_duplicate_tag_attributes(tag_attributes)
+            processed_attributes = remove_duplicate_tag_attributes(processed_attributes)
             tag_combinations.append(
                 TagCombination(cluster_id=cluster_id, descriptors=descriptors, comb_type=comb_type, tags=processed_tags,
-                               tag_attributes=tag_attributes))
+                               tag_attributes=processed_attributes))
         return tag_combinations
 
 
