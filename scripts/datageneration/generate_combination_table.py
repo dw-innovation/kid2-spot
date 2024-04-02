@@ -148,8 +148,8 @@ class QueryCombinationGenerator(object):
 
         # self.tag_combinations = tag_combinations
         self.entity_tag_combinations = list(filter(lambda x: 'core' in x['comb_type'], tag_combinations))
-        self.attribute_examples = attribute_examples
-        self.property_generator = PropertyGenerator()
+        # self.attribute_examples = attribute_examples
+        self.property_generator = PropertyGenerator(attribute_examples)
 
         # id2_descriptors = {}
         # descriptor2_ids = {}
@@ -278,7 +278,7 @@ class QueryCombinationGenerator(object):
 
         return relations
 
-    def run(self, area_chance, num_queries):
+    def run(self, area_chance, num_queries) -> List[LocPoint]:
         '''
         A method that generates random query combinations and optionally saves them to a JSON file.
         It gets a list of random tag combinations and adds additional information that is required to generate

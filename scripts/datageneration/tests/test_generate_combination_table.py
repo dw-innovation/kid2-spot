@@ -4,7 +4,7 @@ import pandas as pd
 from datageneration.generate_combination_table import QueryCombinationGenerator
 
 '''
-Execute it as follows: python -m tests.test_feature_generator
+Execute it as follows: python -m unittest datageneration.tests.test_generate_combination_table
 '''
 
 

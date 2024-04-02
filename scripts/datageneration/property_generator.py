@@ -36,11 +36,17 @@ class PropertyGenerator:
         print(property_obj)
         ```
         """
+        return self.generate_non_numerical_property(tag_attribute)
+
+    def generate_non_numerical_property(self, tag_attribute):
         attribute_examples = self.select_named_property_example(
             f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
         np.random.shuffle(attribute_examples)
         selected_example = attribute_examples[0]
         return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
+
+    def generate_proper_noun_property(self, tag_attribute: TagAttribute) -> Property:
+        return self.generate_non_numerical_property(tag_attribute)
 
     def generate_numerical_property(self, tag_attribute: TagAttribute) -> Property:
         raise NotImplemented
