@@ -9,7 +9,7 @@ Execute it as follows: python -m datageneration.tests.test_retrieve_combination
 
 class TestCombinationRetriever(unittest.TestCase):
     def setUp(self):
-        self.retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_filtered9.xlsx',
+        self.retriever = CombinationRetriever(source='datageneration/tests/data/Primary_Keys_test.xlsx',
                                               att_limit=100)
 
     def test_fetch_attributes(self):
@@ -19,6 +19,7 @@ class TestCombinationRetriever(unittest.TestCase):
         for result in results:
             processed_results.append(f'{result.key}{result.operator}{result.value}')
 
+        assert len(results) == 100
         assert 'name=***any***' in processed_results
         assert 'cuisine=***any***' in processed_results
         assert 'building=water_tower' not in processed_results

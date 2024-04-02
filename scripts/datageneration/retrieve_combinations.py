@@ -116,6 +116,10 @@ class CombinationRetriever(object):
         self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
         self.att_limit = att_limit
 
+        self.all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
+        self.numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
+                                                                       self.all_tags_attributes_ids)]
+
     def process_tag_attributes(self, tag_df):
         """
         Process tags, attributes from a DataFrame (PrimaryKey table).
@@ -217,16 +221,13 @@ class CombinationRetriever(object):
     def request_related_tag_attributes(self, tag_key: str, tag_value: str, limit: str = 100) -> List[TagAttribute]:
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)['data']
         selected_attributes = []
-        all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
-        numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
-                                                                       all_tags_attributes_ids)]
         for combination in combinations:
-            if len(selected_attributes) == limit - 1:
+            if len(selected_attributes) == limit:
                 return list(selected_attributes)
             for seperator in SEPERATORS:
                 other_tag = combination['other_key'] + seperator + combination['other_value']
 
-                if other_tag in all_tags_attributes_ids:
+                if other_tag in self.all_tags_attributes_ids:
                     other_tag_type = self.all_osm_tags_and_attributes[other_tag]['type']
                     if 'attr' in other_tag_type:
                         selected_attribute = self.all_osm_tags_and_attributes[other_tag]['tag']
@@ -235,10 +236,10 @@ class CombinationRetriever(object):
                                                                 value=selected_attribute_split[1]))
                         continue
                 else:
-                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), all_tags_attributes_ids))
+                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), self.all_tags_attributes_ids))
                     if len(results) == 0:
                         rewritten_tag = ""
-                        if (combination['other_key'] in numeric_tags_attributes_ids and
+                        if (combination['other_key'] in self.numeric_tags_attributes_ids and
                                 combination['other_value'].isnumeric()):
                             if int(combination['other_value']) > 0:
                                 rewritten_tag = combination['other_key'] + ">0"
@@ -246,7 +247,7 @@ class CombinationRetriever(object):
                             rewritten_tag = combination['other_key'] + seperator
 
                         results = list(
-                            filter(lambda x: x.startswith(rewritten_tag), all_tags_attributes_ids))
+                            filter(lambda x: x.startswith(rewritten_tag), self.all_tags_attributes_ids))
 
                         if len(results) >= 0:
                             for result in results:
