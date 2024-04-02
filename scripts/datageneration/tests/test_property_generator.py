@@ -1,4 +1,5 @@
 import unittest
+
 import pandas as pd
 from datageneration.data_model import TagAttribute, Property
 from datageneration.property_generator import PropertyGenerator
@@ -23,8 +24,22 @@ class TestPropertyGenerator(unittest.TestCase):
         assert isinstance(named_property, Property)
 
     def test_numerical_property(self):
-        tag_attribute = TagAttribute(**{"key": "height", "operator": "=", "value": "***numeric***"})
-        tag_attribute = TagAttribute(**{"key": "lanes", "operator": "=", "value": "***numeric***"})
+        numerical_tag_attribute = TagAttribute(**{"key": "height", "operator": "=", "value": "***numeric***"})
+        numerical_property = self.property_generator.generate_numerical_property(numerical_tag_attribute)
+
+        # todo write asserting about type, min, max
+        assert isinstance(numerical_property, Property)
+
+        numerical_tag_attribute = TagAttribute(**{"key": "lanes", "operator": "=", "value": "***numeric***"})
+        numerical_property = self.property_generator.generate_numerical_property(numerical_tag_attribute)
+        # todo write asserting about type, min, max
+        assert isinstance(numerical_property, Property)
+
+        # todo write asserting about type, min, max
+        numerical_tag_attribute = TagAttribute(**{"key": "building:levels", "operator": "=", "value": "***numeric***"})
+        numerical_property = self.property_generator.generate_numerical_property(numerical_tag_attribute)
+        # todo write asserting about type, min, max
+        assert isinstance(numerical_property, Property)
 
     def test_color_property(self):
         pass

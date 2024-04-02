@@ -4,6 +4,23 @@ import numpy as np
 from datageneration.data_model import TagAttributeExample, TagAttribute, Property
 
 
+# numerical value generator
+def get_random_decimal_with_metric(range):
+    '''
+    TODO: this should be reworked -- threshold should be defined based on metric
+    '''
+    h_ = np.random.choice(np.arange(range), 1)[0]
+    if np.random.choice([True, False], 1)[0]:
+        h_ = h_ / np.random.choice([10, 100], 1)[0]
+
+    h_ = str(h_) + " " + np.random.choice(["m", "km", "in", "ft", "yd", "mi", "le"], 1)[0]  # "cm",
+    return h_
+
+
+def get_random_integer(max_value: int, min_value: int) -> int:
+    return np.random.choice(np.arange(max_value), min_value)[0]
+
+
 class PropertyGenerator:
     def __init__(self, named_property_examples: List[TagAttributeExample]):
         self.named_property_examples = named_property_examples
@@ -46,10 +63,19 @@ class PropertyGenerator:
         return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
 
     def generate_proper_noun_property(self, tag_attribute: TagAttribute) -> Property:
+        '''Proper nouns are names such as name=Laughen_restaurant'''
         return self.generate_non_numerical_property(tag_attribute)
 
     def generate_numerical_property(self, tag_attribute: TagAttribute) -> Property:
-        raise NotImplemented
+        # todo --> we might need specific numerical function if we need to define logical max/min values.
+        key_attribute = tag_attribute.key
+        if "height" in key_attribute:
+            # todo rename this
+            generated_numerical_value = get_random_decimal_with_metric(2000)
+        else:
+            # todo rename this
+            generated_numerical_value = str(get_random_integer(max_value=50, min_value=1))
+        return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=generated_numerical_value)
 
     def generate_color_property(self, tag_attribute: TagAttribute) -> Property:
         raise NotImplemented
