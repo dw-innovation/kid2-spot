@@ -6,6 +6,7 @@ import numpy as np
 from datageneration.data_model import Entity, Area, Relation, Property, LocPoint, TagCombination, TagAttributeExample, \
     TagAttribute
 from datageneration.property_generator import PropertyGenerator
+from datageneration.relation_generator import RelationGenerator
 from tqdm import tqdm
 
 
@@ -150,6 +151,7 @@ class QueryCombinationGenerator(object):
         self.entity_tag_combinations = list(filter(lambda x: 'core' in x['comb_type'], tag_combinations))
         # self.attribute_examples = attribute_examples
         self.property_generator = PropertyGenerator(attribute_examples)
+        self.relation_generator = RelationGenerator()
 
         # id2_descriptors = {}
         # descriptor2_ids = {}
@@ -251,31 +253,7 @@ class QueryCombinationGenerator(object):
 
     # todo make it independent from entities
     def generate_relations(self, num_entities) -> List[Relation]:
-        relations = []
-        selected_task = np.random.choice(np.asarray(list(self.task_chances.keys())),
-                                         p=np.asarray(list(self.task_chances.values())))
-        if selected_task == "individual_distances" and num_entities > 2:  # Pick random distance between all individual objects
-            # action = "individual_distances"
-
-            for t_no in range(num_entities):
-                if t_no != num_entities - 1:
-                    relations.append(
-                        Relation(name='dist', source=t_no, target=t_no + 1,
-                                 value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
-
-        elif selected_task == "in_area" or num_entities == 1:  # Just search for all given objects in area, no distance required
-            # action = "in_area"
-
-            # edge_dict = {"from": -1, "to": -1, "weight": -1}
-            # edges.append(edge_dict)
-            pass
-        elif selected_task == 'within_radius':  # Search for all places where all objects are within certain radius
-            for t_no in range(num_entities):
-                if t_no != num_entities - 1:
-                    relations.append(
-                        Relation(name='dist', source=0, target=t_no + 1,
-                                 value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
-
+        relations = self.relation_generator.run(num_entities=num_entities)
         return relations
 
     def run(self, area_chance, num_queries) -> List[LocPoint]:
