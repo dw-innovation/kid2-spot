@@ -29,7 +29,6 @@ class PropertyGenerator:
         for item in self.named_property_examples:
             if item['key'] == property_name:
                 return item['examples']
-        return None
 
     def generate_named_property(self, tag_attribute: TagAttribute) -> Property:
         """
@@ -58,6 +57,10 @@ class PropertyGenerator:
     def generate_non_numerical_property(self, tag_attribute):
         attribute_examples = self.select_named_property_example(
             f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
+
+        if not attribute_examples:
+            raise ValueError(f"There is an issue with {tag_attribute}")
+
         np.random.shuffle(attribute_examples)
         selected_example = attribute_examples[0]
         return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
@@ -79,3 +82,30 @@ class PropertyGenerator:
 
     def generate_color_property(self, tag_attribute: TagAttribute) -> Property:
         raise NotImplemented
+
+    def run(self, tag_attribute: TagAttribute) -> Property:
+        '''
+        Generate a property based on a tag attribute.
+
+        Parameters:
+            tag_attribute (TagAttribute): The tag attribute object containing information about the attribute.
+
+        Returns:
+            Property: The generated property.
+
+        This method checks the type of the tag attribute and generates a property accordingly.
+        If the attribute is numeric, it generates a numerical property.
+        If the attribute key contains 'name', it generates a proper noun property.
+        If the attribute key contains 'color', it generates a color property.
+        Otherwise, it generates a named property.
+        '''
+        if 'numeric' in tag_attribute.value:
+            generated_property = self.generate_numerical_property(tag_attribute)
+        else:
+            if 'name' in tag_attribute.key:
+                generated_property = self.generate_proper_noun_property(tag_attribute)
+            elif 'color' in tag_attribute.key:
+                generated_property = self.generate_color_property(tag_attribute)
+            else:
+                generated_property = self.generate_named_property(tag_attribute)
+        return generated_property

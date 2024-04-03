@@ -41,5 +41,10 @@ class TestPropertyGenerator(unittest.TestCase):
         # todo write asserting about type, min, max
         assert isinstance(numerical_property, Property)
 
+    def test_other_type_property(self):
+        # todo write an unit test, how the output would be
+        other_type_attribute = TagAttribute(**{"key": "highway", "operator": "=", "value": "passing_place"})
+        self.property_generator.run(other_type_attribute)
+
     def test_color_property(self):
         pass
