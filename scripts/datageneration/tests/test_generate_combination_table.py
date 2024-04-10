@@ -21,7 +21,8 @@ class TestGenerateCombination(unittest.TestCase):
 
         self.query_comb_generator = QueryCombinationGenerator(geolocations=geolocations,
                                                               tag_combinations=tag_combinations,
-                                                              attribute_examples=attribute_examples)
+                                                              attribute_examples=attribute_examples,
+                                                              max_distance=2000)
 
     # def test_area_generate(self):
     #     trials = 100

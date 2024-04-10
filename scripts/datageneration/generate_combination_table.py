@@ -140,7 +140,8 @@ def pick_tag(tag_list_string):
 
 class QueryCombinationGenerator(object):
     def __init__(self, geolocations, tag_combinations: List[TagCombination],
-                 attribute_examples: List[TagAttributeExample]):
+                 attribute_examples: List[TagAttributeExample],
+                 max_distance: 2000):
         # countries, states, cities = self.fetch_countries_states_cities(geolocations_file_path)
         # print(countries, states, cities)
         # self.countries = countries
@@ -151,7 +152,7 @@ class QueryCombinationGenerator(object):
         self.entity_tag_combinations = list(filter(lambda x: 'core' in x['comb_type'], tag_combinations))
         # self.attribute_examples = attribute_examples
         self.property_generator = PropertyGenerator(attribute_examples)
-        self.relation_generator = RelationGenerator()
+        self.relation_generator = RelationGenerator(max_distance=max_distance)
 
         # id2_descriptors = {}
         # descriptor2_ids = {}
