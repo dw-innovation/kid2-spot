@@ -24,22 +24,10 @@ def get_random_decimal_with_metric(range):
 
 
 class RelationGenerator:
-    """
-    A class for generating relations between entities based on specified task requirements.
-    Args:
-        max_distance (int): The maximum distance between entities.
-    """
     def __init__(self, max_distance: int):
         self.MAX_DISTANCE = max_distance
 
     def generate_individual_distances(self, num_entities: int) -> List[Relation]:
-        """
-        Generate relations representing distances between individual entities.
-        Args:
-            num_entities (int): The number of entities for which relations need to be generated.
-        Returns:
-            List[Relation]: A list of Relation objects representing individual distances.
-        """
         relations = []
         for t_no in range(num_entities):
             if t_no != num_entities - 1:
@@ -48,13 +36,6 @@ class RelationGenerator:
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
 
     def within_radius(self, num_entities: int) -> List[Relation]:
-        """
-        Generate relations representing entities within a certain radius.
-        Args:
-            num_entities (int): The number of entities for which relations need to be generated.
-        Returns:
-            List[Relation]: A list of Relation objects representing entities within a radius.
-        """
         relations = []
         for t_no in range(num_entities):
             if t_no != num_entities - 1:
@@ -64,16 +45,6 @@ class RelationGenerator:
         return relations
 
     def run(self, num_entities: int) -> List[Relation]:
-        """
-        This task runs the general pipeline for generating relations between entities.
-        The specific task for relation generation is randomly selected.
-        Once it is defined, it will execute the corresponding function.
-        Args:
-            num_entities (int): The number of entities involved in the task.
-
-        Returns:
-            List[Relation] or None: A list of Relation objects representing the task outcome.
-        """
         selected_task = np.random.choice(np.asarray(list(self.task_chances.keys())),
                                          p=np.asarray(list(self.task_chances.values())))
         if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES and num_entities > 2:  # Pick random distance between all individual objects
