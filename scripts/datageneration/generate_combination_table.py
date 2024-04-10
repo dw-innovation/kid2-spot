@@ -151,7 +151,7 @@ class QueryCombinationGenerator(object):
         self.entity_tag_combinations = list(filter(lambda x: 'core' in x['comb_type'], tag_combinations))
         # self.attribute_examples = attribute_examples
         self.property_generator = PropertyGenerator(attribute_examples)
-        self.relation_generator = RelationGenerator()
+        self.relation_generator = RelationGenerator(max_distance=2000)
 
         # id2_descriptors = {}
         # descriptor2_ids = {}
