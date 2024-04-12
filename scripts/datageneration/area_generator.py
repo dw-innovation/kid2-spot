@@ -96,21 +96,21 @@ class AreaGenerator:
         np.random.shuffle(self.tasks)
         selected_task = self.tasks[0]
 
-        if selected_task == AREA_TASKS.NO_AREA:
+        if selected_task == AREA_TASKS.NO_AREA.value:
             return self.generate_no_area()
 
-        elif selected_task == AREA_TASKS.CITY:
+        elif selected_task == AREA_TASKS.CITY.value:
             return self.generate_city_area()
 
-        elif selected_task == AREA_TASKS.DISTRICT:
+        elif selected_task == AREA_TASKS.DISTRICT.value:
             # todo: we probably need more comprehensive geolocation data, districs are not in the dataset
             return NotImplemented
 
-        elif selected_task == CITY_AND_COUNTRY:
+        elif selected_task == AREA_TASKS.CITY_AND_COUNTRY.value:
             return self.generate_city_and_country_area()
 
-        elif selected_task == CITY_AND_REGION_AND_COUNTRY:
+        elif selected_task == AREA_TASKS.CITY_AND_REGION_AND_COUNTRY.value:
             return self.generate_city_and_region_and_country()
 
-        elif selected_task == ADMINISTRATIVE_REGION:
+        elif selected_task == AREA_TASKS.ADMINISTRATIVE_REGION.value:
             return self.generate_administrative_region()

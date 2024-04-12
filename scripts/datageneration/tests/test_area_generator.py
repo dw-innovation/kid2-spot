@@ -68,3 +68,12 @@ class TestAreaGenerator(unittest.TestCase):
     def test_two_word_areas(self):
         # todo not implemented
         pass
+
+    def test_area_run(self):
+        '''
+        Run function must return non-empty, area object
+        '''
+        area_sample = self.area_generator.run()
+
+        assert area_sample
+        assert isinstance(area_sample, Area)
