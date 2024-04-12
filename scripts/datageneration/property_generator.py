@@ -59,7 +59,7 @@ class PropertyGenerator:
             f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
 
         if not attribute_examples:
-            raise ValueError(f"There is an issue with {tag_attribute}")
+            return Property(key=tag_attribute.key, operator=tag_attribute.operator,value=tag_attribute.value)
 
         np.random.shuffle(attribute_examples)
         selected_example = attribute_examples[0]

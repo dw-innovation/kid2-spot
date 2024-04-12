@@ -14,7 +14,7 @@ class NamedAreaData(BaseModel):
 
 class AREA_TASKS(Enum):
     NO_AREA = 'no_area'
-    DISTRICT = 'district'
+    # DISTRICT = 'district'
     CITY = 'city'
     CITY_AND_COUNTRY = 'city_and_country'
     CITY_AND_REGION_AND_COUNTRY = 'city_and_region_and_country'
@@ -102,9 +102,9 @@ class AreaGenerator:
         elif selected_task == AREA_TASKS.CITY.value:
             return self.generate_city_area()
 
-        elif selected_task == AREA_TASKS.DISTRICT.value:
-            # todo: we probably need more comprehensive geolocation data, districs are not in the dataset
-            return NotImplemented
+        # elif selected_task == AREA_TASKS.DISTRICT.value:
+        #     # todo: we probably need more comprehensive geolocation data, districs are not in the dataset
+        #     return NotImplemented
 
         elif selected_task == AREA_TASKS.CITY_AND_COUNTRY.value:
             return self.generate_city_and_country_area()

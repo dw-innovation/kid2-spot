@@ -26,6 +26,7 @@ def get_random_decimal_with_metric(range):
 class RelationGenerator:
     def __init__(self, max_distance: int):
         self.MAX_DISTANCE = max_distance
+        self.tasks = [relation_task.value for relation_task in RELATION_TASKS]
 
     def generate_individual_distances(self, num_entities: int) -> List[Relation]:
         relations = []
@@ -45,12 +46,13 @@ class RelationGenerator:
         return relations
 
     def run(self, num_entities: int) -> List[Relation]:
-        selected_task = np.random.choice(np.asarray(list(self.task_chances.keys())),
-                                         p=np.asarray(list(self.task_chances.values())))
-        if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES and num_entities > 2:  # Pick random distance between all individual objects
+        np.random.shuffle(self.tasks)
+        selected_task = self.tasks[0]
+        print(selected_task)
+        if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES.value and num_entities > 2:  # Pick random distance between all individual objects
             relations = self.generate_individual_distances(num_entities=num_entities)
-        elif selected_task == RELATION_TASKS.IN_AREA or num_entities == 1:  # Just search for all given objects in area, no distance required
+        elif selected_task == RELATION_TASKS.IN_AREA.value or num_entities == 1:  # Just search for all given objects in area, no distance required
             relations = None
-        elif selected_task == RELATION_TASKS.WITHIN_RADIUS:  # Search for all places where all objects are within certain radius
-            relations = self.generate_within_radius(num_entities=num_entities)
+        elif selected_task == RELATION_TASKS.WITHIN_RADIUS.value:  # Search for all places where all objects are within certain radius
+            relations = self.within_radius(num_entities=num_entities)
         return relations
