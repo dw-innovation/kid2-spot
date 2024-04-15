@@ -48,7 +48,6 @@ class RelationGenerator:
     def run(self, num_entities: int) -> List[Relation]:
         np.random.shuffle(self.tasks)
         selected_task = self.tasks[0]
-        print(selected_task)
         if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES.value and num_entities > 2:  # Pick random distance between all individual objects
             relations = self.generate_individual_distances(num_entities=num_entities)
         elif selected_task == RELATION_TASKS.IN_AREA.value or num_entities == 1:  # Just search for all given objects in area, no distance required

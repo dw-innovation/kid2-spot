@@ -87,6 +87,12 @@ class LocPoint(BaseModel):
     relations: Optional[List[Relation]]
 
 
+# Relative Spatial Terms
+class RelSpatial(BaseModel):
+    distance: str
+    values: List[str]
+
+
 if __name__ == '__main__':
     area = Area(type='area', value='Berlin')
     assert area

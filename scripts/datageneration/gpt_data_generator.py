@@ -3,10 +3,12 @@ import itertools
 import json
 import os
 from argparse import ArgumentParser
+from typing import List
 
 import numpy as np
 import openai
 import pandas as pd
+from datageneration.data_model import RelSpatial, LocPoint, Area, Property
 from datageneration.utils import write_output
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -123,90 +125,140 @@ def post_processing(text):
     return text
 
 
-# ipek - the code editor says tag_list_path, arbitrary_value_list_path are not used. I think also that it is logical. Neverthless could you validate it again?
+def load_rel_spatial_terms(relative_spatial_terms_path: str) -> List[RelSpatial]:
+    relative_spatial_terms = pd.read_csv(relative_spatial_terms_path).to_dict(orient='records')
+    processed_rel_spatial_terms = []
+    for relative_spatial_term in relative_spatial_terms:
+        values = list(map(lambda x: x.rstrip().strip(), relative_spatial_term['Vals'].split(',')))
+        processed_rel_spatial_terms.append(RelSpatial(distance=relative_spatial_term['Dist'], values=values))
+    return processed_rel_spatial_terms
+
+
+def load_list_of_strings(list_of_strings_path: str) -> List[str]:
+    '''
+    Helper function for personas and styles for data generation. Loads a list of strings from a text file.
+    params:
+    list_of_strings_path: Path to the personas or styles text file.
+    return:
+    list_of_strings: List of strings, either personas or styles.
+    '''
+    with open(list_of_strings_path, 'r') as f:
+        list_of_strings = f.readlines()
+        list_of_strings = list(map(lambda x: x.rstrip().strip(), list_of_strings))
+    return list_of_strings
+
+
+class PromptHelper:
+    def __init__(self):
+        self.beginning_template = """Act as a {persona}: Return a sentence simulating a user using a natural language interface to search for specific geographic locations. Do not affirm this request and return nothing but the answers.\nWrite the search request {style}."""
+        self.search_templates = [
+            "\nThe sentence must use all of the following search criteria:\n",
+            "\nThe user is searching for {place} that fulfills the following search criteria:\n",
+        ]
+        self.predefined_places = ["a street", "a place", "a crossing", "a corner", "an area", "a location"]
+
+    def beginning(self, persona, writing_style):
+        '''
+        Create a beginning of a prompt by using beginning template
+        '''
+        return self.beginning_template.format(persona=persona, style=writing_style)
+
+    def search_query(self, beginning_prompt: str):
+        '''
+        Append the beginning prompt with search phrase. The search phrase is randomly chosen among the search templates. If search templates contain {place}, it randomly selects a place from predefined_places
+        '''
+        np.random.shuffle(self.search_templates)
+        search_template = self.search_templates[0]
+
+        if '{place}' in search_template:
+            np.random.shuffle(self.predefined_places)
+            selected_place = self.predefined_places[0]
+            beginning_prompt += search_template.replace('{place}', selected_place)
+        else:
+            beginning_prompt += search_template
+
+        return beginning_prompt
+
+    def add_area_prompt(self, area: Area) -> str:
+        '''
+        Helper to generate area prompt that is appended to search_prompt
+        '''
+        area_prompt = ""
+        if area.type not in ["bbox", "polygon"]:
+            area_prompt = "Search area: " + area.value + "\n"
+        return area_prompt
+
+    def add_property_prompt(self, core_prompt: str, entity_properties: List[Property]) -> str:
+        for entity_property in entity_properties:
+            core_prompt = core_prompt + ", "
+            if entity_property['key'] == 'height' or is_number(entity_property['value']):
+                pass
+
+
+
+
+            if flt["n"]:
+                core = core + flt["n"]
+            if flts_counter > 0:
+                if flt["op"] == "~":
+                    regex_version = np.random.choice([0, 1, 2])
+                    if regex_version == 0:
+                        core = core + ": " + "contains the letters \"" + flt["v"] + "\""
+                    elif regex_version == 1:
+                        core = core + ": " + "begins with the letters \"" + flt["v"] + "\""
+                    else:
+                        core = core + ": " + "ends with the letters \"" + flt["v"] + "\""
+
+                elif is_number(flt["v"]) or flt["k"] == "height":
+                    if flt["op"] == "<":
+                        lt_list = ["less than", "smaller than", "lower than", "beneath", "under"]
+                        core = core + ": " + np.random.choice(lt_list) + " " + flt["v"]
+                    elif flt["op"] == ">":
+                        gt_list = ["greater than", "more than", "larger than", "above", "over", "at least"]
+                        core = core + ": " + np.random.choice(gt_list) + " " + flt["v"]
+                    else:
+                        core = core + ": " + flt["v"]
+                elif flt["k"] in ("building:material", "addr:street", "name", "cuisine"):
+                    core = core + ": " + flt["v"]
+
+        return core_prompt
+
+
 class GPTDataGenerator:
-    def __init__(self, tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
-                 styles_path):
-        _rel_spatial_terms = pd.read_csv(relative_spatial_terms_path).to_dict(orient='records')
+    def __init__(self, relative_spatial_terms: List[RelSpatial], personas: List[str],
+                 styles: List[str]):
 
-        rel_spatial_terms = {}
-        for row in _rel_spatial_terms:
-            for rsd in row['Vals'].split(','):
-                rel_spatial_terms[rsd.strip()] = row['Dist']
-        self.rel_spatial_terms = rel_spatial_terms
-        self.rel_spatial_terms_as_words = list(self.rel_spatial_terms.keys())
+        self.relative_spatial_terms = relative_spatial_terms
+        self.personas = personas
+        self.styles = styles
+        self.prompt_helper = PromptHelper()
 
-        with open(persona_path, 'r') as f:
-            personas = f.readlines()
-            self.personas = list(map(lambda x: x.strip(), personas))
-        with open(styles_path, 'r') as f:
-            styles = f.readlines()
-            self.styles = list(map(lambda x: x.strip(), styles))
-
-    def generate_prompt(self, comb, persona, style):
+    def generate_prompt(self, loc_point: LocPoint, persona: str, style: str) -> str:
         '''
         A method that takes the intermediate query representation, and uses it to generate a natural language prompt for
         the GPT API. Different sentence structures are required for the different tasks, for the special tag "count",
         as well as for the different substring searches (beginning, ending, containing, equals).
 
-        :param dict comb: The dictionary containing all relevant information for the query
+        :param dict loc_point: The dictionary containing all relevant information for the query
         '''
-        area = comb["a"]["v"]
-        objects = comb["ns"]
-        distances = comb["es"]
 
-        beginning = (
-                "Act as a " + persona + ": Return a sentence simulating a user using a natural language interface to "
-                                        "search for specific geographic locations. Do not affirm this request and return nothing but the "
-                                        "answers. \nWrite the search request " + style + ".")
+        area = loc_point.area
+        entities = loc_point.entities
+        relations = loc_point.relations
 
-        query_phrasing = np.random.choice([0, 1], p=[0.65, 0.35])
-        if query_phrasing == 0:
-            beginning = beginning + style + "\nThe sentence must use all of the following search criteria:\n"
-        elif query_phrasing == 1:
-            place_list = ["a street", "a place", "a crossing", "a corner", "an area", "a location"]
-            beginning = beginning + style + "\nThe user is searching for " + np.random.choice(
-                place_list) + " that fulfills all of the following search criteria:\n"
+        beginning = self.prompt_helper.beginning(persona=persona, writing_style=style)
+        search_prompt = self.prompt_helper.search_query(beginning)
 
-        core = ""
-        if area not in ["bbox", "polygon"]:
-            core = "Search area: " + area + "\n"
-        object_counter = 0
-        for object in objects:
-            core = core + "Obj. " + str(object_counter) + ": "
-            flts_counter = 0
-            for flt in object["flts"]:
-                if flts_counter > 0:
-                    core = core + ", "
+        core_prompt = self.prompt_helper.add_area_prompt(area)
 
-                if flt["n"]:
-                    core = core + flt["n"]
-                if flts_counter > 0:
-                    if flt["op"] == "~":
-                        regex_version = np.random.choice([0, 1, 2])
-                        if regex_version == 0:
-                            core = core + ": " + "contains the letters \"" + flt["v"] + "\""
-                        elif regex_version == 1:
-                            core = core + ": " + "begins with the letters \"" + flt["v"] + "\""
-                        else:
-                            core = core + ": " + "ends with the letters \"" + flt["v"] + "\""
+        for entity_id, entity in enumerate(entities):
+            core_prompt = core_prompt + "Obj. " + str(entity_id) + ": " + entity.name
+            if len(entity.properties) > 0:
+                core_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                     entity_properties=entity.properties)
+            core_prompt += '\n'
 
-                    elif is_number(flt["v"]) or flt["k"] == "height":
-                        if flt["op"] == "<":
-                            lt_list = ["less than", "smaller than", "lower than", "beneath", "under"]
-                            core = core + ": " + np.random.choice(lt_list) + " " + flt["v"]
-                        elif flt["op"] == ">":
-                            gt_list = ["greater than", "more than", "larger than", "above", "over", "at least"]
-                            core = core + ": " + np.random.choice(gt_list) + " " + flt["v"]
-                        else:
-                            core = core + ": " + flt["v"]
-                    elif flt["k"] in ("building:material", "addr:street", "name", "cuisine"):
-                        core = core + ": " + flt["v"]
-
-                flts_counter += 1
-
-            core = core + "\n"
-            object_counter += 1
+        print(core_prompt)
 
         core_edge = ""
         within_dist = False
@@ -247,11 +299,11 @@ class GPTDataGenerator:
             core = core + "All objects are " + np.random.choice(radius_list)
         else:
             if len(distances) > 0:
-                comb["es"] = distances_
+                loc_point["es"] = distances_
             core = core + core_edge
 
         prompt = beginning + core
-        return comb, prompt
+        return loc_point, prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
         persona_style_ids = list(range(num_of_all_persona_style))
@@ -312,8 +364,13 @@ if __name__ == '__main__':
     styles_path = args.styles_path
     tag_query_file = args.tag_query_file
 
-    gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
-                           styles_path)
+    rel_spatial_terms = load_rel_spatial_terms(relative_spatial_terms_path=relative_spatial_terms_path)
+    personas = load_list_of_strings(list_of_strings_path=persona_path)
+    styles = load_list_of_strings(list_of_strings_path=styles_path)
+
+    gen = GPTDataGenerator(relative_spatial_terms=rel_spatial_terms,
+                           personas=personas,
+                           styles_path=styles)
 
     with open(tag_query_file, "r") as f:
         tag_combinations = [json.loads(each_line) for each_line in f]
