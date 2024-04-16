@@ -264,15 +264,14 @@ class GPTDataGenerator:
         self.prompt_helper = PromptHelper(relative_spatial_terms=relative_spatial_terms)
 
     def update_relation_distance(self, relations: Relations, relation_to_be_updated: Relation, distance: str):
-        print('===relations===')
-        print(relations)
-
-        print('==relation_to_be_updated==')
-        print(relation_to_be_updated)
-
-        print('==distance==')
-        print(distance)
-        pass
+        updated_relations = []
+        for relation in relations.relations:
+            if relation == relation_to_be_updated:
+                relation.value = distance
+                updated_relations.append(relation)
+            else:
+                updated_relations.append(relation)
+        return relations.update(relations=updated_relations)
 
     def generate_prompt(self, loc_point: LocPoint, persona: str, style: str) -> str:
         '''
@@ -301,7 +300,7 @@ class GPTDataGenerator:
 
         core_relation = ''
         for relation in relations.relations:
-            rst_chance = 0.4
+            rst_chance = self.prob_usage_of_relative_spatial_terms
             use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
             if use_relative_spatial_terms:
                 generated_prompt, overwritten_distance = self.prompt_helper.add_relative_spatial_terms(relation)
@@ -309,6 +308,8 @@ class GPTDataGenerator:
                 self.update_relation_distance(relations=relations.relations,
                                               relation_to_be_updated=relation,
                                               distance=overwritten_distance)
+            else:
+                pass
 
         # core_edge = ""
         # within_dist = False

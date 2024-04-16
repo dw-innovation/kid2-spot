@@ -82,6 +82,10 @@ class Relations(BaseModel):
     relations: Optional[List[Relation]]
     type: str
 
+    def update(self, **new_data):
+        for field, value in new_data.items():
+            setattr(self, field, value)
+
 
 class LocPoint(BaseModel):
     area: Area

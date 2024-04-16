@@ -155,7 +155,7 @@ class TestGPTGenerator(unittest.TestCase):
     def test_relative_spatial_terms(self):
         test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
         test_rel_2 = Relation(**{"name": "dist", "source": 0, "target": 2, "value": "1539 yd"})
-        test_relations = Relations(relations=[test_rel_1, test_rel_2])
+        test_relations = Relations(relations=[test_rel_1, test_rel_2], type='within_radius')
         test_rel_spatial = RelSpatial(**{"distance": "250 m", "values": ['on the opposite side']})
         selected_relative_spatial_term = test_rel_spatial.values[0]
         generated_prompt, overwritten_dist = self.prompt_helper.add_relative_spatial_term_helper(
@@ -167,8 +167,14 @@ class TestGPTGenerator(unittest.TestCase):
 
         self.gen.update_relation_distance(relations=test_relations, relation_to_be_updated=test_rel_1,
                                           distance=overwritten_dist)
+        expected_updated_rel = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "250 m"})
+        is_updated = False
+        for test_relation in test_relations.relations:
+            if test_relation == expected_updated_rel:
+                is_updated = True
+                break
 
-        self.assertEqual(test_rel_1.distance, overwritten_dist)
+        self.assertTrue(is_updated)
 
 
 if __name__ == '__main__':
