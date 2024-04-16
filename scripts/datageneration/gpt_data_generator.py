@@ -149,6 +149,10 @@ def load_list_of_strings(list_of_strings_path: str) -> List[str]:
 
 
 class PromptHelper:
+    '''
+    It is a helper class for prompt generation. It has templates and functions for paraphrasing prompts.
+    '''
+
     def __init__(self):
         self.beginning_template = """Act as a {persona}: Return a sentence simulating a user using a natural language interface to search for specific geographic locations. Do not affirm this request and return nothing but the answers.\nWrite the search request {style}."""
         self.search_templates = [
@@ -156,6 +160,11 @@ class PromptHelper:
             "\nThe user is searching for {place} that fulfills the following search criteria:\n",
         ]
         self.predefined_places = ["a street", "a place", "a crossing", "a corner", "an area", "a location"]
+        self.name_regex_templates = ["contains the letters", "begins with the letters", "ends with the letters"]
+        self.phrases_for_numerical_comparison = {
+            "<": ["less than", "smaller than", "lower than", "beneath", "under"],
+            ">": ["greater than", "more than", "larger than", "above", "over", "at least"]
+        }
 
     def beginning(self, persona, writing_style):
         '''
@@ -188,38 +197,46 @@ class PromptHelper:
             area_prompt = "Search area: " + area.value + "\n"
         return area_prompt
 
+    def add_numerical_prompt(self, entity_property: Property) -> str:
+        '''
+        This helper generates a numerical prompt for numerical properties and properties such as height
+        '''
+        if entity_property.operator not in self.phrases_for_numerical_comparison:
+            return f": {entity_property.value}"
+        else:
+            numerical_phrases = self.phrases_for_numerical_comparison[entity_property.operator]
+            np.random.shuffle(numerical_phrases)
+            selected_numerical_phrase = numerical_phrases[0]
+            return f": {selected_numerical_phrase} {entity_property.value}"
+
+    def add_name_regex_prompt(self, entity_property: Property) -> str:
+        np.random.shuffle(self.name_regex_templates)
+        selected_name_regex = self.name_regex_templates[0]
+        return f": {selected_name_regex} \"{entity_property.value}\""
+
     def add_property_prompt(self, core_prompt: str, entity_properties: List[Property]) -> str:
         for entity_property in entity_properties:
             core_prompt = core_prompt + ", "
-            if entity_property['key'] == 'height' or is_number(entity_property['value']):
-                pass
+            core_prompt = core_prompt + entity_property.name
 
+            if entity_property.key == 'height' or is_number(entity_property.value):
+                core_prompt = core_prompt + self.add_numerical_prompt(entity_property=entity_property)
+            elif entity_property.operator == '~':
+                core_prompt = core_prompt + self.add_name_regex_prompt(entity_property=entity_property)
+            else:
+                core_prompt = core_prompt + f": {entity_property.value}"
 
-
-
-            if flt["n"]:
-                core = core + flt["n"]
-            if flts_counter > 0:
-                if flt["op"] == "~":
-                    regex_version = np.random.choice([0, 1, 2])
-                    if regex_version == 0:
-                        core = core + ": " + "contains the letters \"" + flt["v"] + "\""
-                    elif regex_version == 1:
-                        core = core + ": " + "begins with the letters \"" + flt["v"] + "\""
-                    else:
-                        core = core + ": " + "ends with the letters \"" + flt["v"] + "\""
-
-                elif is_number(flt["v"]) or flt["k"] == "height":
-                    if flt["op"] == "<":
-                        lt_list = ["less than", "smaller than", "lower than", "beneath", "under"]
-                        core = core + ": " + np.random.choice(lt_list) + " " + flt["v"]
-                    elif flt["op"] == ">":
-                        gt_list = ["greater than", "more than", "larger than", "above", "over", "at least"]
-                        core = core + ": " + np.random.choice(gt_list) + " " + flt["v"]
-                    else:
-                        core = core + ": " + flt["v"]
-                elif flt["k"] in ("building:material", "addr:street", "name", "cuisine"):
-                    core = core + ": " + flt["v"]
+            # if flts_counter > 0:
+            #     if flt["op"] == "~":
+            #         regex_version = np.random.choice([0, 1, 2])
+            #         if regex_version == 0:
+            #             core = core + ": " + "contains the letters \"" + flt["v"] + "\""
+            #         elif regex_version == 1:
+            #             core = core + ": " + "begins with the letters \"" + flt["v"] + "\""
+            #         else:
+            #             core = core + ": " + "ends with the letters \"" + flt["v"] + "\""
+            #     elif flt["k"] in ("building:material", "addr:street", "name", "cuisine"):
+            #         core = core + ": " + flt["v"]
 
         return core_prompt
 

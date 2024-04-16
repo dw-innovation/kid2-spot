@@ -62,16 +62,63 @@ class TestGPTGenerator(unittest.TestCase):
 
     def test_add_property_prompt(self):
         core_prompt = "Search area: Columbus, United States\nObj. 0: restaurant"
-        ent_properties = [Property(key='height', operator='=', value='10 meters')]
+        ent_properties = [Property(key='height', operator='=', value='10 meters', name='height')]
         generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
                                                                   entity_properties=ent_properties)
+        expected_prompt = "Search area: Columbus, United States\nObj. 0: restaurant, height: 10 meters"
+        self.assertEqual(generated_prompt, expected_prompt)
 
-        # core_prompt = "Search area: Columbus, United States\nObj. 0: downhill ski run,"
-        # ent_properties = [Property(key='name', operator='~', value='Donuty'),
-        #                   Property(key='highway', operator='=', value='bus_guideway')]
-        # generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt, entity_property=ent_property)
+        # test randomness and check if the correct larger_phrases exist
+        ent_properties = [Property(key='height', operator='>', value='10 meters', name='height')]
+        generated_prompts = set()
+        for i in range(10):
+            generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                      entity_properties=ent_properties)
+            larger_phrase_exists = False
+            for larger_phrase in self.prompt_helper.phrases_for_numerical_comparison['>']:
+                if larger_phrase in generated_prompt:
+                    larger_phrase_exists = True
+                    continue
+            self.assertTrue(larger_phrase_exists)
+            generated_prompts.add(generated_prompt)
+        self.assertLessEqual(len(generated_prompts), 10)
 
-        print(generated_prompt)
+        # test randomness and check if the correct smaller_phrases exist
+        ent_properties = [Property(key='height', operator='<', value='10 meters', name='height')]
+        generated_prompts = set()
+        for i in range(10):
+            generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                      entity_properties=ent_properties)
+            smaller_phrase_exists = False
+            for smaller_phrase in self.prompt_helper.phrases_for_numerical_comparison['<']:
+                if smaller_phrase in generated_prompt:
+                    smaller_phrase_exists = True
+                    continue
+            self.assertTrue(smaller_phrase_exists)
+            generated_prompts.add(generated_prompt)
+        self.assertLessEqual(len(generated_prompts), 10)
+
+        # test randomness for name regex prompt
+        ent_properties = [Property(key='name', operator='~', value='10 meters', name='name')]
+        generated_prompts = set()
+        for i in range(10):
+            generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                        entity_properties=ent_properties)
+            name_regex_exists = False
+            for name_regex in self.prompt_helper.name_regex_templates:
+                if name_regex in generated_prompt:
+                    name_regex_exists = True
+                    continue
+            self.assertTrue(name_regex_exists)
+            generated_prompts.add(generated_prompt)
+        self.assertLessEqual(len(generated_prompts), 10)
+
+        # test other properties such as cuisine
+        ent_properties = [Property(key='cuisine', operator='=', value='italian', name='cuisine'), Property(key='building:material', operator='=', value='wooden', name='material')]
+        generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt, entity_properties=ent_properties)
+        expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, material: wooden'
+        self.assertEqual(generated_prompt, expected_prompt)
+
 
     # def test_generate_prompt(self):
     #     test_comb = {"area": {"type": "area", "value": "Columbus, United States"}, "entities": [
