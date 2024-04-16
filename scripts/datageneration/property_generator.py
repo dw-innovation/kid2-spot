@@ -26,6 +26,7 @@ class PropertyGenerator:
         self.named_property_examples = named_property_examples
 
     def select_named_property_example(self, property_name: str) -> List[str]:
+        # print(self.named_property_examples)
         for item in self.named_property_examples:
             if item['key'] == property_name:
                 return item['examples']
@@ -58,12 +59,15 @@ class PropertyGenerator:
         attribute_examples = self.select_named_property_example(
             f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
 
-        if not attribute_examples:
-            raise ValueError(f"There is an issue with {tag_attribute}")
+        if "***any***" in tag_attribute.value: # examples only occur when the value is "any"
+            if not attribute_examples:
+                raise ValueError(f"There is an issue with {tag_attribute}")
 
-        np.random.shuffle(attribute_examples)
-        selected_example = attribute_examples[0]
-        return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
+            np.random.shuffle(attribute_examples)
+            selected_example = attribute_examples[0]
+            return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
+        else:
+            return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value)
 
     def generate_proper_noun_property(self, tag_attribute: TagAttribute) -> Property:
         '''Proper nouns are names such as name=Laughen_restaurant'''

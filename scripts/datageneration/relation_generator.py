@@ -47,7 +47,9 @@ class RelationGenerator:
                     Relation(name='dist', source=t_no, target=t_no + 1,
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
 
-    def within_radius(self, num_entities: int) -> List[Relation]:
+        return relations
+
+    def generate_within_radius(self, num_entities: int) -> List[Relation]:
         """
         Generate relations representing entities within a certain radius.
         Args:
@@ -56,12 +58,22 @@ class RelationGenerator:
             List[Relation]: A list of Relation objects representing entities within a radius.
         """
         relations = []
+        distance = get_random_decimal_with_metric(self.MAX_DISTANCE)
         for t_no in range(num_entities):
             if t_no != num_entities - 1:
                 relations.append(
                     Relation(name='dist', source=0, target=t_no + 1,
-                             value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
+                             value=distance))
         return relations
+
+    def generate_in_area(self) -> None:
+        """
+        Returns the relations for the case that an "in area" search was performed. This case does not require real
+        distance value, it since just returns "None".
+        Returns:
+            None: None, as this case does not require distance values.
+        """
+        return None
 
     def run(self, num_entities: int) -> List[Relation]:
         """
@@ -79,7 +91,8 @@ class RelationGenerator:
         if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES and num_entities > 2:  # Pick random distance between all individual objects
             relations = self.generate_individual_distances(num_entities=num_entities)
         elif selected_task == RELATION_TASKS.IN_AREA or num_entities == 1:  # Just search for all given objects in area, no distance required
-            relations = None
+            relations = self.generate_in_area()
         elif selected_task == RELATION_TASKS.WITHIN_RADIUS:  # Search for all places where all objects are within certain radius
             relations = self.generate_within_radius(num_entities=num_entities)
+
         return relations
