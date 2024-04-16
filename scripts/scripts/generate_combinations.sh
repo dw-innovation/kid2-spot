@@ -9,4 +9,4 @@ python -m datageneration.generate_combination_table \
 --max_distance 2000 \
 --max_number_of_props_in_entity 4 \
 --number_of_entities_in_prompt 4 \
---samples 10
+--samples 50

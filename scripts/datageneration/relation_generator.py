@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List
 
 import numpy as np
-from datageneration.data_model import Relation
+from datageneration.data_model import Relation, Relations
 
 
 class RELATION_TASKS(Enum):
@@ -45,13 +45,16 @@ class RelationGenerator:
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
         return relations
 
-    def run(self, num_entities: int) -> List[Relation]:
+    def run(self, num_entities: int) -> Relations:
         np.random.shuffle(self.tasks)
         selected_task = self.tasks[0]
         if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES.value and num_entities > 2:  # Pick random distance between all individual objects
-            relations = self.generate_individual_distances(num_entities=num_entities)
+            relations = Relations(type=selected_task,
+                                  relations=self.generate_individual_distances(num_entities=num_entities))
         elif selected_task == RELATION_TASKS.IN_AREA.value or num_entities == 1:  # Just search for all given objects in area, no distance required
-            relations = None
+            relations = Relations(type=selected_task,
+                                  relations=None)
         elif selected_task == RELATION_TASKS.WITHIN_RADIUS.value:  # Search for all places where all objects are within certain radius
-            relations = self.within_radius(num_entities=num_entities)
+            relations = Relations(type=selected_task,
+                                  relations=self.within_radius(num_entities=num_entities))
         return relations

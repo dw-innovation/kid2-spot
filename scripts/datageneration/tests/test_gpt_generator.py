@@ -1,8 +1,7 @@
 import unittest
 
-from datageneration.data_model import Area, Property
-from datageneration.gpt_data_generator import GPTDataGenerator, load_rel_spatial_terms, load_list_of_strings, \
-    PromptHelper
+from datageneration.data_model import Area, Property, Relation, RelSpatial, Relations
+from datageneration.gpt_data_generator import GPTDataGenerator, load_rel_spatial_terms, load_list_of_strings
 
 '''
 Execute it as follows: python -m unittest datageneration.tests.test_gpt_generator
@@ -23,9 +22,10 @@ class TestGPTGenerator(unittest.TestCase):
 
         self.gen = GPTDataGenerator(relative_spatial_terms=rel_spatial_terms,
                                     personas=personas,
-                                    styles=styles)
+                                    styles=styles,
+                                    prob_usage_of_relative_spatial_terms=0.5)
 
-        self.prompt_helper = PromptHelper()
+        self.prompt_helper = self.gen.prompt_helper
 
     def test_prompt_helper(self):
         test_persona = 'human rights abuse monitoring OSINT Expert'
@@ -103,7 +103,7 @@ class TestGPTGenerator(unittest.TestCase):
         generated_prompts = set()
         for i in range(10):
             generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
-                                                                        entity_properties=ent_properties)
+                                                                      entity_properties=ent_properties)
             name_regex_exists = False
             for name_regex in self.prompt_helper.name_regex_templates:
                 if name_regex in generated_prompt:
@@ -114,30 +114,33 @@ class TestGPTGenerator(unittest.TestCase):
         self.assertLessEqual(len(generated_prompts), 10)
 
         # test other properties such as cuisine
-        ent_properties = [Property(key='cuisine', operator='=', value='italian', name='cuisine'), Property(key='building:material', operator='=', value='wooden', name='material')]
-        generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt, entity_properties=ent_properties)
+        ent_properties = [Property(key='cuisine', operator='=', value='italian', name='cuisine'),
+                          Property(key='building:material', operator='=', value='wooden', name='material')]
+        generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                  entity_properties=ent_properties)
         expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, material: wooden'
         self.assertEqual(generated_prompt, expected_prompt)
-
 
     # def test_generate_prompt(self):
     #     test_comb = {"area": {"type": "area", "value": "Columbus, United States"}, "entities": [
     #         {"id": 0, "name": "downhill ski run", "type": "nwr",
-    #          "properties": [{"key": "highway", "operator": "=", "value": "bus_guideway"}]},
+    #          "properties": [{"key": "highway", "operator": "=", "value": "bus_guideway", "name": "bus guideway"}]},
     #         {"id": 1, "name": "post relay box", "type": "nwr",
-    #          "properties": [{"key": "height", "operator": "=", "value": "1406 yd"},
-    #                         {"key": "building", "operator": "=", "value": "bridge"},
-    #                         {"key": "name", "operator": "=", "value": "KFC"}]},
+    #          "properties": [{"key": "height", "operator": "=", "value": "1406 yd", "name": "height"},
+    #                         {"key": "building", "operator": "=", "value": "bridge", "name": "bridge"},
+    #                         {"key": "name", "operator": "=", "value": "KFC", "name": "KFC"}]},
     #         {"id": 2, "name": "office of a telecommunication company", "type": "nwr",
-    #          "properties": [{"key": "internet_access", "operator": "=", "value": "wlan"},
-    #                         {"key": "building", "operator": "=", "value": "bridge"},
-    #                         {"key": "name", "operator": "=", "value": "Main Street"}]},
+    #          "properties": [{"key": "internet_access", "operator": "=", "value": "wlan", "name": "wlan"},
+    #                         {"key": "building", "operator": "=", "value": "bridge", "name": "bridge"},
+    #                         {"key": "name", "operator": "=", "value": "Main Street", "name": "name"}]},
     #         {"id": 3, "name": "aerorotor", "type": "nwr",
-    #          "properties": [{"key": "man_made", "operator": "=", "value": "tunnel"},
-    #                         {"key": "roof:material", "operator": "=", "value": "cadjan_palmyrah_straw"}]}],
-    #                  "relations": [{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"},
-    #                                {"name": "dist", "source": 0, "target": 2, "value": "24.2 mi"},
-    #                                {"name": "dist", "source": 0, "target": 3, "value": "1195 mi"}]}
+    #          "properties": [{"key": "man_made", "operator": "=", "value": "tunnel", "name": "tunnel"},
+    #                         {"key": "roof:material", "operator": "=", "value": "cadjan_palmyrah_straw",
+    #                          "name": "roof material"}]}],
+    #                  "relations": {"relations": [{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"},
+    #                                              {"name": "dist", "source": 0, "target": 2, "value": "24.2 mi"},
+    #                                              {"name": "dist", "source": 0, "target": 3, "value": "1195 mi"}],
+    #                                'type': 'within_radius'}}
     #
     #     test_persona = 'human rights abuse monitoring OSINT Expert'
     #     test_style = 'with very precise wording, short, to the point'
@@ -149,20 +152,23 @@ class TestGPTGenerator(unittest.TestCase):
     #     assert test_persona in generated_prompt
     #     assert test_style in generated_prompt
 
-    # def test_generate_prompt(self):
-    #     pairs = self.gen.assign_persona_styles_to_queries(3, 10)
-    #
-    #     assert len(pairs) == 10
-    #
-    #     predicted_persona_style_ids = set()
-    #     for tag_id, persona_and_style_id in pairs:
-    #         predicted_persona_style_ids.add(persona_and_style_id)
-    #
-    #     assert len(predicted_persona_style_ids) == 3
+    def test_relative_spatial_terms(self):
+        test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
+        test_rel_2 = Relation(**{"name": "dist", "source": 0, "target": 2, "value": "1539 yd"})
+        test_relations = Relations(relations=[test_rel_1, test_rel_2])
+        test_rel_spatial = RelSpatial(**{"distance": "250 m", "values": ['on the opposite side']})
+        selected_relative_spatial_term = test_rel_spatial.values[0]
+        generated_prompt, overwritten_dist = self.prompt_helper.add_relative_spatial_term_helper(
+            selected_relative_spatial_term=selected_relative_spatial_term, relation=test_rel_1,
+            selected_relative_spatial=test_rel_spatial)
+        expected_prompt = "Use this term to describe the spatial relation between Obj. 0 and 1 similar to (similar to \"X is _ Y\"): on the opposite side\n"
 
-    # def test_generate_prompt_cuisine(self):
-    #     # todo write a command for checking overwritten
-    #     pass
+        self.assertEqual(generated_prompt, expected_prompt)
+
+        self.gen.update_relation_distance(relations=test_relations, relation_to_be_updated=test_rel_1,
+                                          distance=overwritten_dist)
+
+        self.assertEqual(test_rel_1.distance, overwritten_dist)
 
 
 if __name__ == '__main__':

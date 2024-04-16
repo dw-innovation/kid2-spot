@@ -79,13 +79,14 @@ class Relation(BaseModel):
 
 
 class Relations(BaseModel):
-    relations: List[Relation]
+    relations: Optional[List[Relation]]
+    type: str
 
 
 class LocPoint(BaseModel):
     area: Area
     entities: List[Entity]
-    relations: Optional[List[Relation]]
+    relations: Optional[Relations]
 
 
 # Relative Spatial Terms
