@@ -37,15 +37,33 @@ class RelationGenerator:
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
 
     def within_radius(self, num_entities: int) -> List[Relation]:
+        """
+        Generate relations representing entities within a certain radius.
+        Args:
+            num_entities (int): The number of entities for which relations need to be generated.
+        Returns:
+            List[Relation]: A list of Relation objects representing entities within a radius.
+        """
         relations = []
+        distance = get_random_decimal_with_metric(self.MAX_DISTANCE)
         for t_no in range(num_entities):
             if t_no != num_entities - 1:
                 relations.append(
                     Relation(name='dist', source=0, target=t_no + 1,
-                             value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
+                             value=distance))
         return relations
-
+      
     def run(self, num_entities: int) -> Relations:
+        """
+        This task runs the general pipeline for generating relations between entities.
+        The specific task for relation generation is randomly selected.
+        Once it is defined, it will execute the corresponding function.
+        Args:
+            num_entities (int): The number of entities involved in the task.
+
+        Returns:
+            List[Relation] or None: A list of Relation objects representing the task outcome.
+        """
         np.random.shuffle(self.tasks)
         selected_task = self.tasks[0]
         if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES.value and num_entities > 2:  # Pick random distance between all individual objects
