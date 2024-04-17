@@ -13,7 +13,7 @@ def get_random_decimal_with_metric(range):
     if np.random.choice([True, False], 1)[0]:
         h_ = h_ / np.random.choice([10, 100], 1)[0]
 
-    h_ = str(h_) + " " + np.random.choice(["m", "km", "in", "ft", "yd", "mi", "le"], 1)[0]  # "cm",
+    h_ = str(h_) + " " + np.random.choice(["mm", "cm", "m", "km", "in", "ft", "yd", "mi", "le"], 1)[0]  # "cm",
     return h_
 
 
