@@ -79,13 +79,24 @@ class Relation(BaseModel):
 
 
 class Relations(BaseModel):
-    relations: List[Relation]
+    relations: Optional[List[Relation]]
+    type: str
+
+    def update(self, **new_data):
+        for field, value in new_data.items():
+            setattr(self, field, value)
 
 
 class LocPoint(BaseModel):
     area: Area
     entities: List[Entity]
-    relations: Optional[List[Relation]]
+    relations: Optional[Relations]
+
+
+# Relative Spatial Terms
+class RelSpatial(BaseModel):
+    distance: str
+    values: List[str]
 
 
 if __name__ == '__main__':

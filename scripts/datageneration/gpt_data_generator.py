@@ -1,12 +1,13 @@
-import copy
 import itertools
 import json
 import os
 from argparse import ArgumentParser
+from typing import List
 
 import numpy as np
 import openai
 import pandas as pd
+from datageneration.data_model import RelSpatial, LocPoint, Area, Property, Relation, Relations
 from datageneration.utils import write_output
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -123,135 +124,237 @@ def post_processing(text):
     return text
 
 
-# ipek - the code editor says tag_list_path, arbitrary_value_list_path are not used. I think also that it is logical. Neverthless could you validate it again?
+def load_rel_spatial_terms(relative_spatial_terms_path: str) -> List[RelSpatial]:
+    relative_spatial_terms = pd.read_csv(relative_spatial_terms_path).to_dict(orient='records')
+    processed_rel_spatial_terms = []
+    for relative_spatial_term in relative_spatial_terms:
+        values = list(map(lambda x: x.rstrip().strip(), relative_spatial_term['Vals'].split(',')))
+        processed_rel_spatial_terms.append(RelSpatial(distance=relative_spatial_term['Dist'], values=values))
+    return processed_rel_spatial_terms
+
+
+def load_list_of_strings(list_of_strings_path: str) -> List[str]:
+    '''
+    Helper function for personas and styles for data generation. Loads a list of strings from a text file.
+    params:
+    list_of_strings_path: Path to the personas or styles text file.
+    return:
+    list_of_strings: List of strings, either personas or styles.
+    '''
+    with open(list_of_strings_path, 'r') as f:
+        list_of_strings = f.readlines()
+        list_of_strings = list(map(lambda x: x.rstrip().strip(), list_of_strings))
+    return list_of_strings
+
+
+class PromptHelper:
+    '''
+    It is a helper class for prompt generation. It has templates and functions for paraphrasing prompts.
+    '''
+
+    def __init__(self, relative_spatial_terms):
+        self.relative_spatial_terms = relative_spatial_terms
+        self.beginning_template = """Act as a {persona}: Return a sentence simulating a user using a natural language interface to search for specific geographic locations. Do not affirm this request and return nothing but the answers.\nWrite the search request {style}."""
+        self.search_templates = [
+            "\nThe sentence must use all of the following search criteria:\n",
+            "\nThe user is searching for {place} that fulfills the following search criteria:\n",
+        ]
+        self.predefined_places = ["a street", "a place", "a crossing", "a corner", "an area", "a location"]
+        self.name_regex_templates = ["contains the letters", "begins with the letters", "ends with the letters"]
+        self.phrases_for_numerical_comparison = {
+            "<": ["less than", "smaller than", "lower than", "beneath", "under"],
+            ">": ["greater than", "more than", "larger than", "above", "over", "at least"]
+        }
+
+    def beginning(self, persona, writing_style):
+        '''
+        Create a beginning of a prompt by using beginning template
+        '''
+        return self.beginning_template.format(persona=persona, style=writing_style)
+
+    def search_query(self, beginning_prompt: str):
+        '''
+        Append the beginning prompt with search phrase. The search phrase is randomly chosen among the search templates. If search templates contain {place}, it randomly selects a place from predefined_places
+        '''
+        np.random.shuffle(self.search_templates)
+        search_template = self.search_templates[0]
+
+        if '{place}' in search_template:
+            np.random.shuffle(self.predefined_places)
+            selected_place = self.predefined_places[0]
+            beginning_prompt += search_template.replace('{place}', selected_place)
+        else:
+            beginning_prompt += search_template
+
+        return beginning_prompt
+
+    def add_area_prompt(self, area: Area) -> str:
+        '''
+        Helper to generate area prompt that is appended to search_prompt
+        '''
+        area_prompt = ""
+        if area.type not in ["bbox", "polygon"]:
+            area_prompt = "Search area: " + area.value + "\n"
+        return area_prompt
+
+    def add_numerical_prompt(self, entity_property: Property) -> str:
+        '''
+        This helper generates a numerical prompt for numerical properties and properties such as height
+        '''
+        if entity_property.operator not in self.phrases_for_numerical_comparison:
+            return f": {entity_property.value}"
+        else:
+            numerical_phrases = self.phrases_for_numerical_comparison[entity_property.operator]
+            np.random.shuffle(numerical_phrases)
+            selected_numerical_phrase = numerical_phrases[0]
+            return f": {selected_numerical_phrase} {entity_property.value}"
+
+    def add_name_regex_prompt(self, entity_property: Property) -> str:
+        '''
+        It is a helper function for name properties such as name, street names
+        '''
+        np.random.shuffle(self.name_regex_templates)
+        selected_name_regex = self.name_regex_templates[0]
+        return f": {selected_name_regex} \"{entity_property.value}\""
+
+    def add_property_prompt(self, core_prompt: str, entity_properties: List[Property]) -> str:
+        for entity_property in entity_properties:
+            core_prompt = core_prompt + ", "
+            core_prompt = core_prompt + entity_property.name
+
+            if entity_property.key == 'height' or is_number(entity_property.value):
+                core_prompt = core_prompt + self.add_numerical_prompt(entity_property=entity_property)
+            elif entity_property.operator == '~':
+                core_prompt = core_prompt + self.add_name_regex_prompt(entity_property=entity_property)
+            else:
+                core_prompt = core_prompt + f": {entity_property.value}"
+        return core_prompt
+
+    def add_relative_spatial_terms(self, relation: Relation) -> tuple:
+        '''
+        Randomly selects relative spatial term
+        '''
+        np.random.shuffle(self.relative_spatial_terms)
+        selected_relative_spatial = self.relative_spatial_terms[0]
+
+        # select randomly descriptor of relative special
+        descriptors_of_relative_spatial_terms = selected_relative_spatial.values
+        np.random.shuffle(descriptors_of_relative_spatial_terms)
+        selected_relative_spatial_term = descriptors_of_relative_spatial_terms[0]
+        generated_prompt, overwritten_distance = self.add_relative_spatial_term_helper(
+            selected_relative_spatial_term, relation, selected_relative_spatial)
+
+        return (generated_prompt, overwritten_distance)
+
+    def add_relative_spatial_term_helper(self, selected_relative_spatial_term: str, relation: Relation,
+                                         selected_relative_spatial: RelSpatial):
+        generated_prompt = f"Use this term to describe the spatial relation between Obj. {relation.source} and {relation.target} similar to (similar to \"X is _ Y\"): {selected_relative_spatial_term}\n"
+        overwritten_distance = selected_relative_spatial.distance
+        return generated_prompt, overwritten_distance
+
+
 class GPTDataGenerator:
-    def __init__(self, tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
-                 styles_path):
-        _rel_spatial_terms = pd.read_csv(relative_spatial_terms_path).to_dict(orient='records')
+    def __init__(self, relative_spatial_terms: List[RelSpatial], personas: List[str],
+                 styles: List[str], prob_usage_of_relative_spatial_terms: float = 0.6):
 
-        rel_spatial_terms = {}
-        for row in _rel_spatial_terms:
-            for rsd in row['Vals'].split(','):
-                rel_spatial_terms[rsd.strip()] = row['Dist']
-        self.rel_spatial_terms = rel_spatial_terms
-        self.rel_spatial_terms_as_words = list(self.rel_spatial_terms.keys())
+        self.relative_spatial_terms = relative_spatial_terms
+        self.prob_usage_of_relative_spatial_terms = prob_usage_of_relative_spatial_terms
+        self.personas = personas
+        self.styles = styles
+        self.prompt_helper = PromptHelper(relative_spatial_terms=relative_spatial_terms)
 
-        with open(persona_path, 'r') as f:
-            personas = f.readlines()
-            self.personas = list(map(lambda x: x.strip(), personas))
-        with open(styles_path, 'r') as f:
-            styles = f.readlines()
-            self.styles = list(map(lambda x: x.strip(), styles))
+    def update_relation_distance(self, relations: Relations, relation_to_be_updated: Relation, distance: str):
+        updated_relations = []
+        for relation in relations.relations:
+            if relation == relation_to_be_updated:
+                relation.value = distance
+                updated_relations.append(relation)
+            else:
+                updated_relations.append(relation)
+        return relations.update(relations=updated_relations)
 
-    def generate_prompt(self, comb, persona, style):
+    def generate_prompt(self, loc_point: LocPoint, persona: str, style: str) -> str:
         '''
         A method that takes the intermediate query representation, and uses it to generate a natural language prompt for
         the GPT API. Different sentence structures are required for the different tasks, for the special tag "count",
         as well as for the different substring searches (beginning, ending, containing, equals).
 
-        :param dict comb: The dictionary containing all relevant information for the query
+        :param dict loc_point: The dictionary containing all relevant information for the query
         '''
-        area = comb["a"]["v"]
-        objects = comb["ns"]
-        distances = comb["es"]
 
-        beginning = (
-                "Act as a " + persona + ": Return a sentence simulating a user using a natural language interface to "
-                                        "search for specific geographic locations. Do not affirm this request and return nothing but the "
-                                        "answers. \nWrite the search request " + style + ".")
+        area = loc_point.area
+        entities = loc_point.entities
+        relations = loc_point.relations
 
-        query_phrasing = np.random.choice([0, 1], p=[0.65, 0.35])
-        if query_phrasing == 0:
-            beginning = beginning + style + "\nThe sentence must use all of the following search criteria:\n"
-        elif query_phrasing == 1:
-            place_list = ["a street", "a place", "a crossing", "a corner", "an area", "a location"]
-            beginning = beginning + style + "\nThe user is searching for " + np.random.choice(
-                place_list) + " that fulfills all of the following search criteria:\n"
+        beginning = self.prompt_helper.beginning(persona=persona, writing_style=style)
+        search_prompt = self.prompt_helper.search_query(beginning)
 
-        core = ""
-        if area not in ["bbox", "polygon"]:
-            core = "Search area: " + area + "\n"
-        object_counter = 0
-        for object in objects:
-            core = core + "Obj. " + str(object_counter) + ": "
-            flts_counter = 0
-            for flt in object["flts"]:
-                if flts_counter > 0:
-                    core = core + ", "
+        core_prompt = self.prompt_helper.add_area_prompt(area)
 
-                if flt["n"]:
-                    core = core + flt["n"]
-                if flts_counter > 0:
-                    if flt["op"] == "~":
-                        regex_version = np.random.choice([0, 1, 2])
-                        if regex_version == 0:
-                            core = core + ": " + "contains the letters \"" + flt["v"] + "\""
-                        elif regex_version == 1:
-                            core = core + ": " + "begins with the letters \"" + flt["v"] + "\""
-                        else:
-                            core = core + ": " + "ends with the letters \"" + flt["v"] + "\""
+        for entity_id, entity in enumerate(entities):
+            core_prompt = core_prompt + "Obj. " + str(entity_id) + ": " + entity.name
+            if len(entity.properties) > 0:
+                core_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                     entity_properties=entity.properties)
+            core_prompt += '\n'
 
-                    elif is_number(flt["v"]) or flt["k"] == "height":
-                        if flt["op"] == "<":
-                            lt_list = ["less than", "smaller than", "lower than", "beneath", "under"]
-                            core = core + ": " + np.random.choice(lt_list) + " " + flt["v"]
-                        elif flt["op"] == ">":
-                            gt_list = ["greater than", "more than", "larger than", "above", "over", "at least"]
-                            core = core + ": " + np.random.choice(gt_list) + " " + flt["v"]
-                        else:
-                            core = core + ": " + flt["v"]
-                    elif flt["k"] in ("building:material", "addr:street", "name", "cuisine"):
-                        core = core + ": " + flt["v"]
+        core_relation = ''
+        for relation in relations.relations:
+            rst_chance = self.prob_usage_of_relative_spatial_terms
+            use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
+            if use_relative_spatial_terms:
+                generated_prompt, overwritten_distance = self.prompt_helper.add_relative_spatial_terms(relation)
+                core_relation += generated_prompt
+                self.update_relation_distance(relations=relations.relations,
+                                              relation_to_be_updated=relation,
+                                              distance=overwritten_distance)
+            else:
+                pass
 
-                flts_counter += 1
-
-            core = core + "\n"
-            object_counter += 1
-
-        core_edge = ""
-        within_dist = False
-        if len(distances) > 0:
-            dist_counter = 0
-            within_dist = True
-            distances_ = copy.deepcopy(distances)
-            for d in distances_:
-                src = d["src"]
-                tgt = d["tgt"]
-                dist = d["dist"]
-                if src != 0:
-                    within_dist = False
-
-                # Random draft: Inclusion of relative spatial terms - Load from document and randomly change "dist" in comb, and alter sentence
-                rst_chance = 0.4
-                use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
-                if use_relative_spatial_terms:
-                    # ipek - i changed the following line
-                    # rs_term = np.random.choice(__builtins__.list(self.rel_spatial_terms.keys()), 1)[0]
-                    random.shuffle(self.rel_spatial_terms_as_words)
-                    rs_term = random.choice(self.rel_spatial_terms_as_words)
-                    core_edge += "Use this term to describe the spatial relation between Obj. " + str(
-                        src) + " and " + str(
-                        tgt) + " (similar to \"X is _ Y\"): " + rs_term + "\n"
-                    d["dist"] = str(self.rel_spatial_terms[rs_term])
-                else:
-                    desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
-                                 "around ", "at max ", "about ", "at least "]
-                    away_list = ["", "", "", "away ", "away from ", "from "]
-                    # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
-                    core_edge += "Obj. " + str(src) + " is " + np.random.choice(desc_list) + str(
-                        dist) + " " + np.random.choice(away_list) + "from Obj. " + str(tgt) + "\n"
-                dist_counter += 1
-
-        if within_dist:
-            radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
-            core = core + "All objects are " + np.random.choice(radius_list)
-        else:
-            if len(distances) > 0:
-                comb["es"] = distances_
-            core = core + core_edge
-
-        prompt = beginning + core
-        return comb, prompt
+        # core_edge = ""
+        # within_dist = False
+        # if len(distances) > 0:
+        #     dist_counter = 0
+        #     within_dist = True
+        #     distances_ = copy.deepcopy(distances)
+        #     for d in distances_:
+        #         src = d["src"]
+        #         tgt = d["tgt"]
+        #         dist = d["dist"]
+        #         if src != 0:
+        #             within_dist = False
+        #
+        #         # Random draft: Inclusion of relative spatial terms - Load from document and randomly change "dist" in comb, and alter sentence
+        #         rst_chance = 0.4
+        #         use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
+        #         if use_relative_spatial_terms:
+        #             # ipek - i changed the following line
+        #             # rs_term = np.random.choice(__builtins__.list(self.rel_spatial_terms.keys()), 1)[0]
+        #             random.shuffle(self.rel_spatial_terms_as_words)
+        #             rs_term = random.choice(self.rel_spatial_terms_as_words)
+        #             core_edge += "Use this term to describe the spatial relation between Obj. " + str(
+        #                 src) + " and " + str(
+        #                 tgt) + " (similar to \"X is _ Y\"): " + rs_term + "\n"
+        #             d["dist"] = str(self.rel_spatial_terms[rs_term])
+        #         else:
+        #             desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
+        #                          "around ", "at max ", "about ", "at least "]
+        #             away_list = ["", "", "", "away ", "away from ", "from "]
+        #             # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
+        #             core_edge += "Obj. " + str(src) + " is " + np.random.choice(desc_list) + str(
+        #                 dist) + " " + np.random.choice(away_list) + "from Obj. " + str(tgt) + "\n"
+        #         dist_counter += 1
+        #
+        # if within_dist:
+        #     radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
+        #     core = core + "All objects are " + np.random.choice(radius_list)
+        # else:
+        #     if len(distances) > 0:
+        #         loc_point["es"] = distances_
+        #     core = core + core_edge
+        #
+        # prompt = beginning + core
+        return loc_point, prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
         persona_style_ids = list(range(num_of_all_persona_style))
@@ -311,9 +414,16 @@ if __name__ == '__main__':
     persona_path = args.persona_path
     styles_path = args.styles_path
     tag_query_file = args.tag_query_file
+    prob_usage_of_relative_spatial_terms = args.prob_usage_of_relative_spatial_terms
 
-    gen = GPTDataGenerator(tag_list_path, arbitrary_value_list_path, relative_spatial_terms_path, persona_path,
-                           styles_path)
+    rel_spatial_terms = load_rel_spatial_terms(relative_spatial_terms_path=relative_spatial_terms_path)
+    personas = load_list_of_strings(list_of_strings_path=persona_path)
+    styles = load_list_of_strings(list_of_strings_path=styles_path)
+
+    gen = GPTDataGenerator(relative_spatial_terms=rel_spatial_terms,
+                           personas=personas,
+                           styles_path=styles,
+                           prob_usage_of_relative_spatial_terms=prob_usage_of_relative_spatial_terms)
 
     with open(tag_query_file, "r") as f:
         tag_combinations = [json.loads(each_line) for each_line in f]

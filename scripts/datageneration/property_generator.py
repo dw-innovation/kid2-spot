@@ -59,15 +59,12 @@ class PropertyGenerator:
         attribute_examples = self.select_named_property_example(
             f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
 
-        if "***any***" in tag_attribute.value: # examples only occur when the value is "any"
-            if not attribute_examples:
-                raise ValueError(f"There is an issue with {tag_attribute}")
+        if not attribute_examples:
+            return Property(key=tag_attribute.key, operator=tag_attribute.operator,value=tag_attribute.value, name=tag_attribute.value)
 
-            np.random.shuffle(attribute_examples)
-            selected_example = attribute_examples[0]
-            return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example)
-        else:
-            return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value)
+        np.random.shuffle(attribute_examples)
+        selected_example = attribute_examples[0]
+        return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=selected_example, name=tag_attribute.value)
 
     def generate_proper_noun_property(self, tag_attribute: TagAttribute) -> Property:
         '''Proper nouns are names such as name=Laughen_restaurant'''
@@ -82,7 +79,7 @@ class PropertyGenerator:
         else:
             # todo rename this
             generated_numerical_value = str(get_random_integer(max_value=50, min_value=1))
-        return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=generated_numerical_value)
+        return Property(key=tag_attribute.key, operator=tag_attribute.operator, value=generated_numerical_value, name=tag_attribute.key)
 
     def generate_color_property(self, tag_attribute: TagAttribute) -> Property:
         raise NotImplemented
