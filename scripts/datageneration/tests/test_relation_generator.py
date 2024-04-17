@@ -19,8 +19,8 @@ class TestRelationGenerator(unittest.TestCase):
         assert len(set(targets)) == len(relations)
 
     def test_within_radius(self):
-        relations = self.relation_generator.generate_within_radius(num_entities=3)
-        print(relations)
+        relations = self.relation_generator.within_radius(num_entities=3)
+
         dists = [r.value for r in relations]
         sources = [r.source for r in relations]
         targets = [r.target for r in relations]
@@ -30,6 +30,6 @@ class TestRelationGenerator(unittest.TestCase):
         assert len(set(targets)) == len(relations)
 
     def test_in_area(self):
-        relations = self.relation_generator.generate_in_area()
+        relations = self.relation_generator.generate_in_area(num_entities=1)
 
         assert relations == None

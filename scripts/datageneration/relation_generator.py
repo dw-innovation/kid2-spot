@@ -35,6 +35,7 @@ class RelationGenerator:
                 relations.append(
                     Relation(name='dist', source=t_no, target=t_no + 1,
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
+        return relations
 
     def within_radius(self, num_entities: int) -> List[Relation]:
         """
@@ -52,6 +53,12 @@ class RelationGenerator:
                     Relation(name='dist', source=0, target=t_no + 1,
                              value=distance))
         return relations
+
+    def generate_in_area(self, num_entities: int) -> None:
+        '''
+        It returns None, that indicates that the relation is not clear or one object exists
+        '''
+        return None
       
     def run(self, num_entities: int) -> Relations:
         """
@@ -71,7 +78,7 @@ class RelationGenerator:
                                   relations=self.generate_individual_distances(num_entities=num_entities))
         elif selected_task == RELATION_TASKS.IN_AREA.value or num_entities == 1:  # Just search for all given objects in area, no distance required
             relations = Relations(type=selected_task,
-                                  relations=None)
+                                  relations=self.generate_in_area(num_entities=num_entities))
         elif selected_task == RELATION_TASKS.WITHIN_RADIUS.value:  # Search for all places where all objects are within certain radius
             relations = Relations(type=selected_task,
                                   relations=self.within_radius(num_entities=num_entities))
