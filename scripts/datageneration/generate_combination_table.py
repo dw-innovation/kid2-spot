@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 from datageneration.area_generator import AreaGenerator, NamedAreaData, load_named_area_data
-from datageneration.data_model import TagAttributeExample, TagAttribute, Property, TagCombination, Entity, Relation, \
+from datageneration.data_model import TagAttributeExample, TagAttribute, Property, TagCombination, Entity, Relations, \
     LocPoint, Area
 from datageneration.property_generator import PropertyGenerator
 from datageneration.relation_generator import RelationGenerator
@@ -128,7 +128,7 @@ class QueryCombinationGenerator(object):
         return tag_properties
 
     # todo make it independent from entities
-    def generate_relations(self, num_entities) -> List[Relation]:
+    def generate_relations(self, num_entities) -> Relations:
         relations = self.relation_generator.run(num_entities=num_entities)
         return relations
 
