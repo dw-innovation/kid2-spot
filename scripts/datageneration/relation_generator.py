@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List
 
 import numpy as np
-from datageneration.data_model import Relation
+from datageneration.data_model import Relation, Relations
 
 
 class RELATION_TASKS(Enum):
@@ -24,22 +24,11 @@ def get_random_decimal_with_metric(range):
 
 
 class RelationGenerator:
-    """
-    A class for generating relations between entities based on specified task requirements.
-    Args:
-        max_distance (int): The maximum distance between entities.
-    """
     def __init__(self, max_distance: int):
         self.MAX_DISTANCE = max_distance
+        self.tasks = [relation_task.value for relation_task in RELATION_TASKS]
 
     def generate_individual_distances(self, num_entities: int) -> List[Relation]:
-        """
-        Generate relations representing distances between individual entities.
-        Args:
-            num_entities (int): The number of entities for which relations need to be generated.
-        Returns:
-            List[Relation]: A list of Relation objects representing individual distances.
-        """
         relations = []
         for t_no in range(num_entities):
             if t_no != num_entities - 1:
@@ -47,9 +36,7 @@ class RelationGenerator:
                     Relation(name='dist', source=t_no, target=t_no + 1,
                              value=get_random_decimal_with_metric(self.MAX_DISTANCE)))
 
-        return relations
-
-    def generate_within_radius(self, num_entities: int) -> List[Relation]:
+    def within_radius(self, num_entities: int) -> List[Relation]:
         """
         Generate relations representing entities within a certain radius.
         Args:
@@ -65,17 +52,8 @@ class RelationGenerator:
                     Relation(name='dist', source=0, target=t_no + 1,
                              value=distance))
         return relations
-
-    def generate_in_area(self) -> None:
-        """
-        Returns the relations for the case that an "in area" search was performed. This case does not require real
-        distance value, it since just returns "None".
-        Returns:
-            None: None, as this case does not require distance values.
-        """
-        return None
-
-    def run(self, num_entities: int) -> List[Relation]:
+      
+    def run(self, num_entities: int) -> Relations:
         """
         This task runs the general pipeline for generating relations between entities.
         The specific task for relation generation is randomly selected.
@@ -86,13 +64,15 @@ class RelationGenerator:
         Returns:
             List[Relation] or None: A list of Relation objects representing the task outcome.
         """
-        selected_task = np.random.choice(np.asarray(list(self.task_chances.keys())),
-                                         p=np.asarray(list(self.task_chances.values())))
-        if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES and num_entities > 2:  # Pick random distance between all individual objects
-            relations = self.generate_individual_distances(num_entities=num_entities)
-        elif selected_task == RELATION_TASKS.IN_AREA or num_entities == 1:  # Just search for all given objects in area, no distance required
-            relations = self.generate_in_area()
-        elif selected_task == RELATION_TASKS.WITHIN_RADIUS:  # Search for all places where all objects are within certain radius
-            relations = self.generate_within_radius(num_entities=num_entities)
-
+        np.random.shuffle(self.tasks)
+        selected_task = self.tasks[0]
+        if selected_task == RELATION_TASKS.INDIVIDUAL_DISTANCES.value and num_entities > 2:  # Pick random distance between all individual objects
+            relations = Relations(type=selected_task,
+                                  relations=self.generate_individual_distances(num_entities=num_entities))
+        elif selected_task == RELATION_TASKS.IN_AREA.value or num_entities == 1:  # Just search for all given objects in area, no distance required
+            relations = Relations(type=selected_task,
+                                  relations=None)
+        elif selected_task == RELATION_TASKS.WITHIN_RADIUS.value:  # Search for all places where all objects are within certain radius
+            relations = Relations(type=selected_task,
+                                  relations=self.within_radius(num_entities=num_entities))
         return relations
