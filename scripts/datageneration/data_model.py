@@ -12,12 +12,6 @@ class TagType(Enum):
 
 
 # Tag Info
-class TagAttribute(BaseModel):
-    key: str = Field(description="Tag property key")
-    operator: str = Field(description="Tag property operator")
-    value: str = Field(description="Tag property value")
-
-
 def remove_duplicate_tag_attributes(tag_attributes):
     processed_tag_attributes = []
     attribute_keys = []
@@ -26,9 +20,10 @@ def remove_duplicate_tag_attributes(tag_attributes):
         if str(tag_attribute) in attribute_keys:
             continue
         else:
-            attribute_keys.append(str(tag_attribute))
+            # attribute_keys.append(str(tag_attribute))
             processed_tag_attributes.append(
-                TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
+                TagAttribute(descriptors=tag_attribute.descriptors, tags=tag_attribute.tags))
+                # TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
     return processed_tag_attributes
 
 
@@ -37,6 +32,15 @@ class Tag(BaseModel):
     operator: str = Field(description="Tag property operator")
     value: str = Field(description="Tag property value")
 
+
+class TagAttribute(BaseModel):
+    descriptors: List[str] = Field(description="List of text names")
+    tags: List[str] # MAYBE TAG INSTEAD???
+
+    # name: str = Field(description='This will be filled out from descriptors')
+    # key: str = Field(description="Tag property key")
+    # operator: str = Field(description="Tag property operator")
+    # value: str = Field(description="Tag property value")
 
 class TagCombination(BaseModel):
     cluster_id: int = Field(description="Cluster Id")
@@ -59,16 +63,16 @@ class Area(BaseModel):
 
 class Property(BaseModel):
     name: str = Field(description='This will be filled out from descriptors')
-    key: str
-    operator: str = Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
-    value: str
+    # key: str
+    operator: Optional[str] = None #Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
+    value: Optional[str] = None
 
 
 class Entity(BaseModel):
     id: int
     name: str
     type: str = Field(default='nwr')
-    properties: Optional[List[Property]]
+    properties: Optional[List[Property]] = None
 
 
 class Relation(BaseModel):
@@ -79,7 +83,7 @@ class Relation(BaseModel):
 
 
 class Relations(BaseModel):
-    relations: Optional[List[Relation]]
+    relations: Optional[List[Relation]] = None
     type: str
 
     def update(self, **new_data):
@@ -90,7 +94,7 @@ class Relations(BaseModel):
 class LocPoint(BaseModel):
     area: Area
     entities: List[Entity]
-    relations: Optional[Relations]
+    relations: Optional[Relations] = None
 
 
 # Relative Spatial Terms
@@ -103,11 +107,11 @@ if __name__ == '__main__':
     area = Area(type='area', value='Berlin')
     assert area
 
-    entities = [Entity(id=1, name='kiosk'),
-                Entity(id=2, name='cafe', properties=[Property(name='name', operator='=', value='Luv')])]
+    entities = [Entity(id=1, name='kiosk', type='nwr'),
+                Entity(id=2, name='cafe', properties=[Property(name='name', key='name', operator='=', value='Luv')])]
     assert entities
 
-    relations = [Relation(name='dist', source=0, target=1, value='10 km')]
+    relations = Relations(type="", relations=[Relation(name='dist', source=0, target=1, value='10 km')])
     assert entities
 
     loc_point = LocPoint(area=area, entities=entities, relations=relations)

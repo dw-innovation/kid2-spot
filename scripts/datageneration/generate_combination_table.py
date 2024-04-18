@@ -10,6 +10,7 @@ from datageneration.data_model import TagAttributeExample, TagAttribute, Propert
 from datageneration.property_generator import PropertyGenerator
 from datageneration.relation_generator import RelationGenerator
 from tqdm import tqdm
+from pathlib import Path
 
 
 def get_random_decimal_with_metric(range):
@@ -91,8 +92,13 @@ class QueryCombinationGenerator(object):
               Otherwise, entities are generated without properties.
         """
         selected_entities = []
+        selected_entity_numbers = []
         while len(selected_entities) < number_of_entities_in_prompt:
             selected_idx_for_combinations = np.random.randint(0, len(self.entity_tag_combinations))
+            if selected_idx_for_combinations in selected_entity_numbers:
+                print(selected_entity_numbers, ">", selected_idx_for_combinations)
+                continue
+            selected_entity_numbers.append(selected_idx_for_combinations)
             selected_tag_comb = self.entity_tag_combinations[selected_idx_for_combinations]
             associated_descriptors = selected_tag_comb['descriptors']
             entity_name = np.random.choice(associated_descriptors)
@@ -152,11 +158,28 @@ class QueryCombinationGenerator(object):
         node_types = ["nwr", "cluster", "group"]
         loc_points = []
         for _ in tqdm(range(num_queries), total=num_queries):
+            new_loc_points = []
             entities = self.generate_entities(number_of_entities_in_prompt=number_of_entities_in_prompt,
                                               max_number_of_props_in_entity=max_number_of_props_in_entity)
             area = self.generate_area()
             relations = self.generate_relations(num_entities=len(entities))
-            loc_points.append(LocPoint(area=area, entities=entities, relations=relations).dict())
+            new_loc_points.append(LocPoint(area=area, entities=entities, relations=relations).dict())
+
+            # Clean up the output and remove all "None" added by the data model (the optional fields)
+            for loc_point in new_loc_points:
+                for entity in loc_point["entities"]:
+                    for property in entity["properties"]:
+                        if property["operator"] is None:
+                            property.pop('operator', None)
+                        if property["value"] is None:
+                            property.pop('value', None)
+
+                if loc_point["relations"]["relations"] is None:
+                    loc_point["relations"].pop('relations', None)
+
+
+            loc_points.extend(new_loc_points)
+
         return loc_points
 
     def generate_area(self) -> Area:
@@ -164,6 +187,8 @@ class QueryCombinationGenerator(object):
 
 
 def write_output(generated_combs, output_file):
+    output_Path = Path(output_file)
+    output_Path.parent.mkdir(exist_ok=True, parents=True)
     with open(output_file, "w") as out_file:
         for generated_comb in generated_combs:
             json.dump(generated_comb, out_file)

@@ -112,9 +112,9 @@ class CombinationRetriever(object):
         tag_df.drop_duplicates(subset='descriptors', inplace=True)
         tag_df["index"] = [i for i in range(len(tag_df))]
         all_osm_tags_and_attributes = self.process_tag_attributes(tag_df)
+        self.att_limit = att_limit
         self.tag_df = tag_df
         self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
-        self.att_limit = att_limit
 
         self.all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
         self.numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
@@ -137,6 +137,8 @@ class CombinationRetriever(object):
             if isinstance(tag_type, float):
                 print(f'{tags} has no type, might be an invalid')
                 continue
+            tags_list = tags['tags']
+            descriptors = tags['descriptors']
             tag_type = tag_type.strip()
             splited_tags = split_tags(tags['tags'])
             for _tag in splited_tags:
@@ -150,12 +152,14 @@ class CombinationRetriever(object):
 
                 if _tag in all_osm_tags_and_attributes:
                     if all_osm_tags_and_attributes[_tag]["type"] != tag_type:
-                        all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0],
+                        all_osm_tags_and_attributes[_tag] = {'tags': tags_list, 'key': _tag_splits[0],
                                                              'operator': tag_operator,
-                                                             'value': _tag_splits[1], 'type': "core/attr"}
+                                                             'value': _tag_splits[1],
+                                                             'type': "core/attr", 'descriptors': descriptors}
                 else:
-                    all_osm_tags_and_attributes[_tag] = {'tag': _tag, 'key': _tag_splits[0], 'operator': tag_operator,
-                                                         'value': _tag_splits[1], 'type': tag_type}
+                    all_osm_tags_and_attributes[_tag] = {'tags': tags_list, 'key': _tag_splits[0],
+                                                         'operator': tag_operator, 'value': _tag_splits[1],
+                                                         'type': tag_type, 'descriptors': descriptors}
 
         return all_osm_tags_and_attributes
 
@@ -212,7 +216,7 @@ class CombinationRetriever(object):
         """
         attributes_and_their_examples = []
         for key, value in self.all_osm_tags_and_attributes.items():
-            if value['type'] != 'core' and '=***any***' in key:
+            if value['type'] != 'core' and '***any***' in key:
                 examples = self.request_attribute_examples(value['key'], num_examples=num_examples)
                 attributes_and_their_examples.append(
                     TagAttributeExample(key=key, examples=examples))
@@ -230,10 +234,13 @@ class CombinationRetriever(object):
                 if other_tag in self.all_tags_attributes_ids:
                     other_tag_type = self.all_osm_tags_and_attributes[other_tag]['type']
                     if 'attr' in other_tag_type:
-                        selected_attribute = self.all_osm_tags_and_attributes[other_tag]['tag']
-                        selected_attribute_split = selected_attribute.split(seperator)
-                        selected_attributes.append(TagAttribute(key=selected_attribute_split[0], operator=seperator,
-                                                                value=selected_attribute_split[1]))
+                        selected_attribute = self.all_osm_tags_and_attributes[other_tag]
+                        # selected_attribute_split = selected_attribute.split(seperator)
+                        tags = [t.strip() for t in selected_attribute['tags'].split(",")]
+                        descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
+                        selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
+                        # selected_attributes.append(TagAttribute(key=selected_attribute_split[0], operator=seperator,
+                        #                                         value=selected_attribute_split[1]))
                         continue
                 else:
                     results = list(filter(lambda x: x.startswith(f"{other_tag}"), self.all_tags_attributes_ids))
@@ -254,16 +261,20 @@ class CombinationRetriever(object):
                                 attribute_value = result
                                 other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
                                 if 'attr' in other_tag_type:
-                                    if ">0" in attribute_value[-2:]:
-                                        attribute_value_split = attribute_value.split(">")
-                                        selected_attributes.append(
-                                            TagAttribute(key=attribute_value_split[0], operator=">",
-                                                         value="0"))
-                                    else:
-                                        attribute_value_split = attribute_value.split(seperator)
-                                        selected_attributes.append(
-                                            TagAttribute(key=attribute_value_split[0], operator=seperator,
-                                                         value=attribute_value_split[1]))
+                                    selected_attribute = self.all_osm_tags_and_attributes[attribute_value]
+                                    tags = [t.strip() for t in selected_attribute['tags'].split(",")]
+                                    descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
+                                    selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
+                                    # if ">0" in attribute_value[-2:]:
+                                    #     attribute_value_split = attribute_value.split(">")
+                                    #     selected_attributes.append(
+                                    #         TagAttribute(key=attribute_value_split[0], operator=">",
+                                    #                      value="0"))
+                                    # else:
+                                    #     attribute_value_split = attribute_value.split(seperator)
+                                    #     selected_attributes.append(
+                                    #         TagAttribute(key=attribute_value_split[0], operator=seperator,
+                                    #                      value=attribute_value_split[1]))
                             continue
 
                     else:
@@ -271,10 +282,16 @@ class CombinationRetriever(object):
                             attribute_value = result
                             other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
                             if 'attr' in other_tag_type:
-                                attribute_value_split = attribute_value.split(seperator)
-                                selected_attributes.append(
-                                    TagAttribute(key=attribute_value_split[0], operator=seperator,
-                                                 value=attribute_value_split[1]))
+                                selected_attribute = self.all_osm_tags_and_attributes[attribute_value]
+                                tags = [t.strip() for t in selected_attribute['tags'].split(",")]
+
+                                tags = [t.strip() for t in selected_attribute['tags'].split(",")]
+                                descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
+                                selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
+                                # attribute_value_split = attribute_value.split(seperator)
+                                # selected_attributes.append(
+                                #     TagAttribute(key=attribute_value_split[0], operator=seperator,
+                                #                  value=attribute_value_split[1]))
         return selected_attributes
 
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:
