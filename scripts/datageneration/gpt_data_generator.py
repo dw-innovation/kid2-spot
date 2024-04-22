@@ -166,6 +166,10 @@ class PromptHelper:
             ">": ["greater than", "more than", "larger than", "above", "over", "at least"]
         }
 
+        self.phrase_for_desc = ["", "more or less", "approximately", "less than", "no more than", "no less than",
+                                "around", "at max", "about", "at least"]
+        self.phrase_for_rel_away = ["", "away", "away from", "from"]
+
     def beginning(self, persona, writing_style):
         '''
         Create a beginning of a prompt by using beginning template
@@ -252,6 +256,23 @@ class PromptHelper:
         overwritten_distance = selected_relative_spatial.distance
         return generated_prompt, overwritten_distance
 
+    def add_standard_relation_phrase(self, relation: Relation) -> str:
+        '''
+
+        '''
+
+        np.random.shuffle(self.desc_list)
+        selected_desc = self.relative_spatial_terms[0]
+
+        # desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
+        #                          "around ", "at max ", "about ", "at least "]
+        #             away_list = ["", "", "", "away ", "away from ", "from "]
+        #             # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
+        #             core_edge += "Obj. " + str(src) + " is " + np.random.choice(desc_list) + str(
+        #                 dist) + " " + np.random.choice(away_list) + "from Obj. " + str(tgt) + "\n"
+        generated_prompt = ''
+        return generated_prompt
+
 
 class GPTDataGenerator:
     def __init__(self, relative_spatial_terms: List[RelSpatial], personas: List[str],
@@ -305,11 +326,12 @@ class GPTDataGenerator:
             if use_relative_spatial_terms:
                 generated_prompt, overwritten_distance = self.prompt_helper.add_relative_spatial_terms(relation)
                 core_relation += generated_prompt
-                self.update_relation_distance(relations=relations.relations,
+                self.update_relation_distance(relations=relations,
                                               relation_to_be_updated=relation,
                                               distance=overwritten_distance)
             else:
-                pass
+                generated_prompt = self.prompt_helper.add_standard_relation_phrase(relation)
+                core_relation += generated_prompt
 
         # core_edge = ""
         # within_dist = False

@@ -176,6 +176,14 @@ class TestGPTGenerator(unittest.TestCase):
 
         self.assertTrue(is_updated)
 
+    def test_add_standard_relation_phrase(self):
+        test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
+        test_rel_2 = Relation(**{"name": "dist", "source": 0, "target": 2, "value": "150 meters"})
+        test_relations = Relations(relations=[test_rel_1, test_rel_2], type='within_radius')
+
+        generated_prompt = self.prompt_helper.add_standard_relation_phrase(relation=test_rel_1)
+        print(generated_prompt)
+
 
 if __name__ == '__main__':
     unittest.main()
