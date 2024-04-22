@@ -26,4 +26,4 @@ def split_jsonl(input_file, output_dir, max_samples_per_chunk=500):
 
 
 # Usage
-split_jsonl('datageneration/results/v11/samples.jsonl', 'datageneration/results/v11')
+split_jsonl('datageneration/results/v12/samples.jsonl', 'datageneration/results/v12')

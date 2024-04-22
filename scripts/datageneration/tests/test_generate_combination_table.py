@@ -35,6 +35,7 @@ class TestGenerateCombination(unittest.TestCase):
 
         entities = self.query_comb_generator.generate_entities(number_of_entities_in_prompt=3,
                                                                       max_number_of_props_in_entity=4)
+
         assert len(entities) == 3
         for entity in entities:
             assert len(entity.properties) >= 1
@@ -48,10 +49,12 @@ class TestGenerateCombination(unittest.TestCase):
 
         properties = self.query_comb_generator.generate_properties(candidate_attributes=candidate_attributes,
                                                                    num_of_props=4)
+
         assert len(properties) == 4
 
         properties = self.query_comb_generator.generate_properties(candidate_attributes=candidate_attributes,
                                                                    num_of_props=3)
+
         assert len(properties) == 3
 
 

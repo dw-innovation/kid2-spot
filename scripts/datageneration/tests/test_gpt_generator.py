@@ -9,7 +9,6 @@ Execute it as follows: python -m unittest datageneration.tests.test_gpt_generato
 
 
 class TestGPTGenerator(unittest.TestCase):
-
     def setUp(self):
         relative_spatial_terms_path = 'datageneration/tests/data/relative_spatial_terms.csv'
         rel_spatial_terms = load_rel_spatial_terms(relative_spatial_terms_path=relative_spatial_terms_path)

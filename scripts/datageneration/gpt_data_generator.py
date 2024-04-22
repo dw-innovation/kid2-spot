@@ -78,9 +78,9 @@ def chatcompletions_with_backoff(**kwargs):
 
 
 # OpenAI parameters
-MODEL = os.getenv('MODEL')
-TEMPERATURE = float(os.getenv('TEMPERATURE'))
-MAX_TOKENS = int(os.getenv('MAX_TOKENS'))
+MODEL = os.getenv('MODEL', 'gpt-3.5-turbo')
+TEMPERATURE = float(os.getenv('TEMPERATURE'), 0.7)
+MAX_TOKENS = int(os.getenv('MAX_TOKENS'), 8000)
 
 CLIENT = OpenAI(
     api_key=os.environ["OPENAI_API_KEY"], organization=os.environ["OPENAI_ORG"]
@@ -166,10 +166,6 @@ class PromptHelper:
             ">": ["greater than", "more than", "larger than", "above", "over", "at least"]
         }
 
-        self.phrase_for_desc = ["", "more or less", "approximately", "less than", "no more than", "no less than",
-                                "around", "at max", "about", "at least"]
-        self.phrase_for_rel_away = ["", "away", "away from", "from"]
-
     def beginning(self, persona, writing_style):
         '''
         Create a beginning of a prompt by using beginning template
@@ -219,7 +215,13 @@ class PromptHelper:
         '''
         np.random.shuffle(self.name_regex_templates)
         selected_name_regex = self.name_regex_templates[0]
-        return f": {selected_name_regex} \"{entity_property.value}\""
+
+        if len(entity_property["value"]) > 1 and len(selected_name_regex) > 0:
+            len_substring = np.random.choice(np.arange(1, len(entity_property['value'])))
+            idx = random.randrange(0, len(entity_property['value']) - len_substring + 1)
+            entity_property["value"] = entity_property['value'][idx: (idx + len_substring)].strip()
+
+        return f": {selected_name_regex}\"{entity_property['value']}\""
 
     def add_property_prompt(self, core_prompt: str, entity_properties: List[Property]) -> str:
         for entity_property in entity_properties:
@@ -255,23 +257,6 @@ class PromptHelper:
         generated_prompt = f"Use this term to describe the spatial relation between Obj. {relation.source} and {relation.target} similar to (similar to \"X is _ Y\"): {selected_relative_spatial_term}\n"
         overwritten_distance = selected_relative_spatial.distance
         return generated_prompt, overwritten_distance
-
-    def add_standard_relation_phrase(self, relation: Relation) -> str:
-        '''
-
-        '''
-
-        np.random.shuffle(self.desc_list)
-        selected_desc = self.relative_spatial_terms[0]
-
-        # desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
-        #                          "around ", "at max ", "about ", "at least "]
-        #             away_list = ["", "", "", "away ", "away from ", "from "]
-        #             # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
-        #             core_edge += "Obj. " + str(src) + " is " + np.random.choice(desc_list) + str(
-        #                 dist) + " " + np.random.choice(away_list) + "from Obj. " + str(tgt) + "\n"
-        generated_prompt = ''
-        return generated_prompt
 
 
 class GPTDataGenerator:
@@ -319,19 +304,36 @@ class GPTDataGenerator:
                                                                      entity_properties=entity.properties)
             core_prompt += '\n'
 
-        core_relation = ''
-        for relation in relations.relations:
-            rst_chance = self.prob_usage_of_relative_spatial_terms
-            use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
-            if use_relative_spatial_terms:
-                generated_prompt, overwritten_distance = self.prompt_helper.add_relative_spatial_terms(relation)
-                core_relation += generated_prompt
-                self.update_relation_distance(relations=relations,
-                                              relation_to_be_updated=relation,
-                                              distance=overwritten_distance)
-            else:
-                generated_prompt = self.prompt_helper.add_standard_relation_phrase(relation)
-                core_relation += generated_prompt
+        core_relation = 'Distances:\n'
+
+        if relations["type"] == "individual_distances":
+            for relation in relations["relations"]:
+                rst_chance = self.prob_usage_of_relative_spatial_terms
+                use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
+                if use_relative_spatial_terms:
+                    generated_prompt, overwritten_distance = self.prompt_helper.add_relative_spatial_terms(relation)
+                    core_relation += generated_prompt
+                    self.update_relation_distance(relations=relations,
+                                                  relation_to_be_updated=relation,
+                                                  distance=overwritten_distance)
+                    # relations = None
+                else:
+                    desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
+                                             "around ", "at max ", "about ", "at least "]
+                    away_list = ["", "", "", "away ", "away from ", "from "]
+                    # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
+                    core_relation += ("Obj. " + str(relation["source"]) + " is " + np.random.choice(desc_list) + str(
+                        relation["value"]) + " " + np.random.choice(away_list) + "from Obj. " + str(relation["target"])
+                        + "\n")
+            core_relation = core_relation[:-1] # remove trailing linebreak
+
+        elif relations["type"] == ("within_radius"):
+            dist = relations["relations"][0]["value"]
+            radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
+            core_relation = "All objects are " + np.random.choice(radius_list)
+        else:
+            core_relation = ''
+            core_prompt = core_prompt[:-1] # remove trailing linebreak
 
         # core_edge = ""
         # within_dist = False
@@ -376,7 +378,15 @@ class GPTDataGenerator:
         #     core = core + core_edge
         #
         # prompt = beginning + core
-        return loc_point, prompt
+
+        core_prompt = core_prompt + core_relation
+
+        print("/////////////////////")
+        print(loc_point)
+        print("~~~")
+        print(core_prompt)
+
+        return loc_point, core_prompt #, prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
         persona_style_ids = list(range(num_of_all_persona_style))
@@ -406,14 +416,32 @@ class GPTDataGenerator:
             comb = tag_queries[tag_id]
             comb, prompt = self.generate_prompt(comb, persona, style)
 
-            generated_sentence = request_openai(prompt=prompt)
-            post_processed_generated_sentence = post_processing(generated_sentence)
+            # generated_sentence = request_openai(prompt=prompt)
+            # post_processed_generated_sentence = post_processing(generated_sentence)
+            # results.append(
+            #     {'query': comb, 'prompt': prompt, 'style': style, 'persona': persona,
+            #      'model_output': generated_sentence, 'text': post_processed_generated_sentence})
+
             results.append(
-                {'query': comb, 'prompt': prompt, 'style': style, 'persona': persona,
-                 'model_output': generated_sentence, 'text': post_processed_generated_sentence})
+                {'query': comb, 'prompt': prompt, 'style': style, 'persona': persona})
 
         return results
 
+class NpEncoder(json.JSONEncoder):
+    '''
+    Custom encoder for the json.dumps function that can handle numpy datastructures.
+
+    :param JSONEncoder json.JSONEncoder: Extensible JSON encoder for python datastructures
+    '''
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NpEncoder, self).default(obj)
 
 if __name__ == '__main__':
     '''
@@ -436,7 +464,7 @@ if __name__ == '__main__':
     persona_path = args.persona_path
     styles_path = args.styles_path
     tag_query_file = args.tag_query_file
-    prob_usage_of_relative_spatial_terms = args.prob_usage_of_relative_spatial_terms
+    prob_usage_of_relative_spatial_terms = float(args.prob_usage_of_relative_spatial_terms)
 
     rel_spatial_terms = load_rel_spatial_terms(relative_spatial_terms_path=relative_spatial_terms_path)
     personas = load_list_of_strings(list_of_strings_path=persona_path)
@@ -444,7 +472,7 @@ if __name__ == '__main__':
 
     gen = GPTDataGenerator(relative_spatial_terms=rel_spatial_terms,
                            personas=personas,
-                           styles_path=styles,
+                           styles=styles,
                            prob_usage_of_relative_spatial_terms=prob_usage_of_relative_spatial_terms)
 
     with open(tag_query_file, "r") as f:
