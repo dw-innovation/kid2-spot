@@ -1,3 +1,4 @@
 volumes/
 .env
 /scripts/venv/
+/scripts/datageneration/tests/data.zip

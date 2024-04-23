@@ -25,6 +25,7 @@ class TestGPTGenerator(unittest.TestCase):
                                     prob_usage_of_relative_spatial_terms=0.5)
 
         self.prompt_helper = self.gen.prompt_helper
+        self.randomness_limit = 50
 
     def test_prompt_helper(self):
         test_persona = 'human rights abuse monitoring OSINT Expert'
@@ -44,11 +45,11 @@ class TestGPTGenerator(unittest.TestCase):
         # testing randomization
         beginning = self.prompt_helper.beginning(persona=test_persona, writing_style=test_style)
         search_prompts = set()
-        for i in range(10):
+        for i in range(self.randomness_limit):
             search_prompt = self.prompt_helper.search_query(beginning)
             search_prompts.add(search_prompt)
 
-        assert len(search_prompts) < 10
+        assert len(search_prompts) < self.randomness_limit
 
         # testing area prompt
         no_area_test = Area(type='bbox', value='')
@@ -70,7 +71,7 @@ class TestGPTGenerator(unittest.TestCase):
         # test randomness and check if the correct larger_phrases exist
         ent_properties = [Property(key='height', operator='>', value='10 meters', name='height')]
         generated_prompts = set()
-        for i in range(10):
+        for i in range(self.randomness_limit):
             generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
                                                                       entity_properties=ent_properties)
             larger_phrase_exists = False
@@ -80,7 +81,7 @@ class TestGPTGenerator(unittest.TestCase):
                     continue
             self.assertTrue(larger_phrase_exists)
             generated_prompts.add(generated_prompt)
-        self.assertLessEqual(len(generated_prompts), 10)
+        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
         # test randomness and check if the correct smaller_phrases exist
         ent_properties = [Property(key='height', operator='<', value='10 meters', name='height')]
@@ -95,12 +96,12 @@ class TestGPTGenerator(unittest.TestCase):
                     continue
             self.assertTrue(smaller_phrase_exists)
             generated_prompts.add(generated_prompt)
-        self.assertLessEqual(len(generated_prompts), 10)
+        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
         # test randomness for name regex prompt
-        ent_properties = [Property(key='name', operator='~', value='10 meters', name='name')]
+        ent_properties = [Property(name='name', operator='~', value='Mc Donald')]
         generated_prompts = set()
-        for i in range(10):
+        for i in range(self.randomness_limit):
             generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
                                                                       entity_properties=ent_properties)
             name_regex_exists = False
@@ -110,46 +111,17 @@ class TestGPTGenerator(unittest.TestCase):
                     continue
             self.assertTrue(name_regex_exists)
             generated_prompts.add(generated_prompt)
-        self.assertLessEqual(len(generated_prompts), 10)
+        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
         # test other properties such as cuisine
-        ent_properties = [Property(key='cuisine', operator='=', value='italian', name='cuisine'),
-                          Property(key='building:material', operator='=', value='wooden', name='material')]
+        ent_properties = [Property(name='cuisine', operator='=', value='italian'),
+                          Property(name='building material', operator='=', value='wooden'),
+                          Property(name='bridge', operator=None, value=None)]
+
         generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
                                                                   entity_properties=ent_properties)
-        expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, material: wooden'
+        expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, building material: wooden, bridge'
         self.assertEqual(generated_prompt, expected_prompt)
-
-    # def test_generate_prompt(self):
-    #     test_comb = {"area": {"type": "area", "value": "Columbus, United States"}, "entities": [
-    #         {"id": 0, "name": "downhill ski run", "type": "nwr",
-    #          "properties": [{"key": "highway", "operator": "=", "value": "bus_guideway", "name": "bus guideway"}]},
-    #         {"id": 1, "name": "post relay box", "type": "nwr",
-    #          "properties": [{"key": "height", "operator": "=", "value": "1406 yd", "name": "height"},
-    #                         {"key": "building", "operator": "=", "value": "bridge", "name": "bridge"},
-    #                         {"key": "name", "operator": "=", "value": "KFC", "name": "KFC"}]},
-    #         {"id": 2, "name": "office of a telecommunication company", "type": "nwr",
-    #          "properties": [{"key": "internet_access", "operator": "=", "value": "wlan", "name": "wlan"},
-    #                         {"key": "building", "operator": "=", "value": "bridge", "name": "bridge"},
-    #                         {"key": "name", "operator": "=", "value": "Main Street", "name": "name"}]},
-    #         {"id": 3, "name": "aerorotor", "type": "nwr",
-    #          "properties": [{"key": "man_made", "operator": "=", "value": "tunnel", "name": "tunnel"},
-    #                         {"key": "roof:material", "operator": "=", "value": "cadjan_palmyrah_straw",
-    #                          "name": "roof material"}]}],
-    #                  "relations": {"relations": [{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"},
-    #                                              {"name": "dist", "source": 0, "target": 2, "value": "24.2 mi"},
-    #                                              {"name": "dist", "source": 0, "target": 3, "value": "1195 mi"}],
-    #                                'type': 'within_radius'}}
-    #
-    #     test_persona = 'human rights abuse monitoring OSINT Expert'
-    #     test_style = 'with very precise wording, short, to the point'
-    #
-    #     # todo: recheck why do we need to change comb, hence return modified comb and a generated prompt
-    #     _, generated_prompt = self.gen.generate_prompt(LocPoint(**test_comb), persona=test_persona,
-    #                                                    style=test_style)
-    #
-    #     assert test_persona in generated_prompt
-    #     assert test_style in generated_prompt
 
     def test_relative_spatial_terms(self):
         test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
@@ -175,13 +147,24 @@ class TestGPTGenerator(unittest.TestCase):
 
         self.assertTrue(is_updated)
 
-    def test_add_standard_relation_phrase(self):
+    def test_add_desc_away_prompt(self):
         test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
-        test_rel_2 = Relation(**{"name": "dist", "source": 0, "target": 2, "value": "150 meters"})
-        test_relations = Relations(relations=[test_rel_1, test_rel_2], type='within_radius')
 
-        generated_prompt = self.prompt_helper.add_standard_relation_phrase(relation=test_rel_1)
-        print(generated_prompt)
+        selected_phrases_desc = "more or less"
+        selected_phrases_away = "away"
+        generated_prompt = self.gen.prompt_helper.add_desc_away_prompt_helper(relation=test_rel_1,
+                                                                              selected_phrases_desc=selected_phrases_desc,
+                                                                              selected_phrases_away=selected_phrases_away)
+        expected_prompt = 'Obj. 0 is more or less 1539 yd away Obj. 1'
+
+        self.assertTrue(generated_prompt, expected_prompt)
+
+        # test randomness
+        generated_prompts = set()
+        for i in range(self.randomness_limit):
+            generated_prompt = self.prompt_helper.add_desc_away_prompt(relation=test_rel_1)
+            generated_prompts.add(generated_prompt)
+        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
 
 if __name__ == '__main__':

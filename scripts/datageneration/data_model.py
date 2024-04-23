@@ -23,7 +23,7 @@ def remove_duplicate_tag_attributes(tag_attributes):
             # attribute_keys.append(str(tag_attribute))
             processed_tag_attributes.append(
                 TagAttribute(descriptors=tag_attribute.descriptors, tags=tag_attribute.tags))
-                # TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
+            # TagAttribute(key=tag_attribute.key, operator=tag_attribute.operator, value=tag_attribute.value))
     return processed_tag_attributes
 
 
@@ -35,12 +35,13 @@ class Tag(BaseModel):
 
 class TagAttribute(BaseModel):
     descriptors: List[str] = Field(description="List of text names")
-    tags: List[str] # MAYBE TAG INSTEAD???
+    tags: List[str]  # MAYBE TAG INSTEAD???
 
     # name: str = Field(description='This will be filled out from descriptors')
     # key: str = Field(description="Tag property key")
     # operator: str = Field(description="Tag property operator")
     # value: str = Field(description="Tag property value")
+
 
 class TagCombination(BaseModel):
     cluster_id: int = Field(description="Cluster Id")
@@ -64,7 +65,8 @@ class Area(BaseModel):
 class Property(BaseModel):
     name: str = Field(description='This will be filled out from descriptors')
     # key: str
-    operator: Optional[str] = None #Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
+    operator: Optional[
+        str] = None  # Field(description='It is = for non-numerical properties, For other values, it can be =,<,>,~')
     value: Optional[str] = None
 
 
@@ -102,6 +104,15 @@ class RelSpatial(BaseModel):
     distance: str
     values: List[str]
 
+
+##########################
+# Data Model for Prompts #
+##########################
+class GeneratedPrompt(BaseModel):
+    query: LocPoint
+    prompt: str
+    style: str
+    persona: str
 
 if __name__ == '__main__':
     area = Area(type='area', value='Berlin')
