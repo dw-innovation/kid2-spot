@@ -114,6 +114,16 @@ class GeneratedPrompt(BaseModel):
     style: str
     persona: str
 
+###################################################
+# Data Model for Prompts and Sentence Generations #
+###################################################
+class GeneratedIMRSentence(BaseModel):
+    query: LocPoint
+    prompt: str
+    style: str
+    persona: str
+    sentence: str
+
 if __name__ == '__main__':
     area = Area(type='area', value='Berlin')
     assert area

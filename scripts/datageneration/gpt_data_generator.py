@@ -7,7 +7,8 @@ from typing import List
 import numpy as np
 import openai
 import pandas as pd
-from datageneration.data_model import RelSpatial, LocPoint, Area, Property, Relation, Relations, GeneratedPrompt
+from datageneration.data_model import RelSpatial, LocPoint, Area, Property, Relation, Relations, GeneratedPrompt, \
+    GeneratedIMRSentence
 from datageneration.utils import write_output
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -171,6 +172,7 @@ class PromptHelper:
 
         # todo: the below line does not make sense
         self.phrases_away = ["", "", "", "away", "away from", "from"]
+        self.phrases_radius = ["within DIST", "in a radius of DIST", "no more than DIST", "DIST from each other"]
 
     def beginning(self, persona, writing_style):
         '''
@@ -285,6 +287,13 @@ class PromptHelper:
         generated_prompt = self.add_desc_away_prompt_helper(relation, selected_phrases_desc, selected_phrases_away)
         return generated_prompt
 
+    def add_prompt_for_within_radius_relation(self, relations: Relations) -> str:
+        np.random.shuffle(self.phrases_radius)
+        selected_phrase = self.phrases_radius[0]
+        selected_phrase = selected_phrase.replace('DIST', relations.relations[0].value)
+        generated_prompt = f"All objects are {selected_phrase}"
+        return generated_prompt
+
 
 class GPTDataGenerator:
     def __init__(self, relative_spatial_terms: List[RelSpatial], personas: List[str],
@@ -348,25 +357,14 @@ class GPTDataGenerator:
             core_relation = core_relation[:-1]  # remove trailing linebreak
 
         elif relations.type == "within_radius":
-            dist = relations.relations[0].value
-            print(dist)
-            radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
-            core_relation = "All objects are " + np.random.choice(radius_list)
-            print("selected core relation")
-            print(core_relation)
-
+            core_relation = self.prompt_helper.add_prompt_for_within_radius_relation(relations)
         else:
+            # this is the case when there is no relation
             core_relation = ''
             core_prompt = core_prompt[:-1]  # remove trailing linebreak
         core_prompt = core_prompt + core_relation
         core_prompt = search_prompt + core_prompt
-
-        print("/////////////////////")
-        print(loc_point)
-        print("~~~")
-        print(core_prompt)
-
-        return loc_point, core_prompt  # , prompt
+        return loc_point, core_prompt
 
     def assign_persona_styles_to_queries(self, num_of_all_persona_style, num_tag_queries):
         persona_style_ids = list(range(num_of_all_persona_style))
@@ -393,20 +391,30 @@ class GPTDataGenerator:
         results = []
         for tag_id, persona_style_pair in tqdm(persona_style_tag_pairs, total=num_tag_queries):
             persona, style = all_possible_persona_and_styles[persona_style_pair]
-            comb = tag_queries[tag_id]
-            comb, prompt = self.generate_prompt(comb, persona, style)
-
-            results.append(GeneratedPrompt(query=comb, prompt=prompt, style=style, persona=persona))
+            imr_sample = tag_queries[tag_id]
+            imr_sample, prompt = self.generate_prompt(imr_sample, persona, style)
+            results.append(GeneratedPrompt(query=imr_sample, prompt=prompt, style=style, persona=persona))
 
         return results
 
-    def generate_sentence_from_llm(self, generated_prompt: GeneratedPrompt) -> List[str]:
-        # generated_sentence = request_openai(prompt=prompt)
-        # post_processed_generated_sentence = post_processing(generated_sentence)
-        # results.append(
-        #     {'query': comb, 'prompt': prompt, 'style': style, 'persona': persona,
-        #      'model_output': generated_sentence, 'text': post_processed_generated_sentence})
-        pass
+    def generate_sentences(self, generated_prompts) -> List[GeneratedIMRSentence]:
+        generated_sentences = []
+        for generated_prompt in tqdm(generated_prompts, total=len(generated_prompts)):
+            generated_sentence = self.generate_sentence(generated_prompt)
+
+            generated_imr_sentence = GeneratedIMRSentence(
+                query=generated_prompt.query,
+                prompt=generated_prompt.prompt,
+                style=generated_prompt.style,
+                persona=generated_prompt.persona,
+                sentence=generated_sentence
+            )
+            generated_sentences.append(generated_imr_sentence)
+        return generated_sentences
+
+    def generate_sentence(self, generated_prompt: GeneratedPrompt) -> str:
+        generated_sentence = request_openai(prompt=generated_prompt.prompt)
+        return generated_sentence
 
 
 if __name__ == '__main__':
@@ -414,25 +422,28 @@ if __name__ == '__main__':
     Define paths and run all desired functions.
     '''
     parser = ArgumentParser()
-    parser.add_argument('--tag_list_path', required=True)
-    parser.add_argument('--arbitrary_value_list_path', required=True)
     parser.add_argument('--relative_spatial_terms_path', help='Path for the relative spats', required=True)
     parser.add_argument('--tag_query_file', required=True)
     parser.add_argument('--output_gpt_generations', required=True)
     parser.add_argument('--output_prompt_generations', required=True)
     parser.add_argument('--persona_path', required=True)
     parser.add_argument('--styles_path', required=True)
+    parser.add_argument('--generate_prompts', action='store_true',
+                        help='Activate it if you want to generate prompts that will be sent to LLM')
+    parser.add_argument('--generate_sentences', action='store_true',
+                        help='Activate it if you want to generate sentences with LLM')
     parser.add_argument('--prob_usage_of_relative_spatial_terms', type=float, default=0.4)
     args = parser.parse_args()
 
-    tag_list_path = args.tag_list_path
-    arbitrary_value_list_path = args.arbitrary_value_list_path
     output_prompt_generations = args.output_prompt_generations
+    output_gpt_generations = args.output_gpt_generations
     relative_spatial_terms_path = args.relative_spatial_terms_path
     persona_path = args.persona_path
     styles_path = args.styles_path
     tag_query_file = args.tag_query_file
-    prob_usage_of_relative_spatial_terms = float(args.prob_usage_of_relative_spatial_terms)
+    prob_usage_of_relative_spatial_terms = args.prob_usage_of_relative_spatial_terms
+    generate_sentences = args.generate_sentences
+    generate_prompts = args.generate_prompts
 
     rel_spatial_terms = load_rel_spatial_terms(relative_spatial_terms_path=relative_spatial_terms_path)
     personas = load_list_of_strings(list_of_strings_path=persona_path)
@@ -443,10 +454,17 @@ if __name__ == '__main__':
                            styles=styles,
                            prob_usage_of_relative_spatial_terms=prob_usage_of_relative_spatial_terms)
 
-    with open(tag_query_file, "r") as f:
-        candidate_loc_points = [LocPoint(**json.loads(each_line)) for each_line in f]
-
-    generated_queries = gen.generate_prompts(candidate_loc_points)
-
-    if output_prompt_generations:
+    generated_queries = None
+    if generate_prompts:
+        with open(tag_query_file, "r") as f:
+            candidate_loc_points = [LocPoint(**json.loads(each_line)) for each_line in f]
+        generated_queries = gen.generate_prompts(candidate_loc_points)
         write_output(generated_queries, output_prompt_generations)
+
+    if generate_sentences:
+        if not generated_queries:
+            with open(output_prompt_generations, "r") as f:
+                generated_queries = [GeneratedPrompt(**json.loads(each_line)) for each_line in f]
+
+            generated_sentences = gen.generate_sentences(generated_queries)
+            write_output(generated_sentences, output_gpt_generations)
