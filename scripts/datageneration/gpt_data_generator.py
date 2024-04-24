@@ -349,56 +349,15 @@ class GPTDataGenerator:
 
         elif relations.type == "within_radius":
             dist = relations.relations[0].value
+            print(dist)
             radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
             core_relation = "All objects are " + np.random.choice(radius_list)
+            print("selected core relation")
+            print(core_relation)
+
         else:
             core_relation = ''
             core_prompt = core_prompt[:-1]  # remove trailing linebreak
-
-        # core_edge = ""
-        # within_dist = False
-        # if len(distances) > 0:
-        #     dist_counter = 0
-        #     within_dist = True
-        #     distances_ = copy.deepcopy(distances)
-        #     for d in distances_:
-        #         src = d["src"]
-        #         tgt = d["tgt"]
-        #         dist = d["dist"]
-        #         if src != 0:
-        #             within_dist = False
-        #
-        #         # Random draft: Inclusion of relative spatial terms - Load from document and randomly change "dist" in comb, and alter sentence
-        #         rst_chance = 0.4
-        #         use_relative_spatial_terms = np.random.choice([False, True], p=[1.0 - rst_chance, rst_chance])
-        #         if use_relative_spatial_terms:
-        #             # ipek - i changed the following line
-        #             # rs_term = np.random.choice(__builtins__.list(self.rel_spatial_terms.keys()), 1)[0]
-        #             random.shuffle(self.rel_spatial_terms_as_words)
-        #             rs_term = random.choice(self.rel_spatial_terms_as_words)
-        #             core_edge += "Use this term to describe the spatial relation between Obj. " + str(
-        #                 src) + " and " + str(
-        #                 tgt) + " (similar to \"X is _ Y\"): " + rs_term + "\n"
-        #             d["dist"] = str(self.rel_spatial_terms[rs_term])
-        #         else:
-        #             desc_list = ["", "more or less ", "approximately ", "less than ", "no more than ", "no less than ",
-        #                          "around ", "at max ", "about ", "at least "]
-        #             away_list = ["", "", "", "away ", "away from ", "from "]
-        #             # core_edge += "Distance " + str(dist_counter) + ": Between Obj. " + str(src) + " and " + str(tgt) + ": " + np.random.choice(desc_list) + " " + str(dist) + " " + np.random.choice(away_list) + "\n"
-        #             core_edge += "Obj. " + str(src) + " is " + np.random.choice(desc_list) + str(
-        #                 dist) + " " + np.random.choice(away_list) + "from Obj. " + str(tgt) + "\n"
-        #         dist_counter += 1
-        #
-        # if within_dist:
-        #     radius_list = ["within " + dist, "in a radius of " + dist, "no more than " + dist + " from each other"]
-        #     core = core + "All objects are " + np.random.choice(radius_list)
-        # else:
-        #     if len(distances) > 0:
-        #         loc_point["es"] = distances_
-        #     core = core + core_edge
-        #
-        # prompt = beginning + core
-
         core_prompt = core_prompt + core_relation
         core_prompt = search_prompt + core_prompt
 

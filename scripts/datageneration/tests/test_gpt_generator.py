@@ -83,22 +83,20 @@ class TestGPTGenerator(unittest.TestCase):
             generated_prompts.add(generated_prompt)
         self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
-        # test randomness and check if the correct smaller_phrases exist
-        ent_properties = [Property(key='height', operator='<', value='10 meters', name='height')]
-        generated_prompts = set()
-        for i in range(10):
-            generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
-                                                                      entity_properties=ent_properties)
-            smaller_phrase_exists = False
-            for smaller_phrase in self.prompt_helper.phrases_for_numerical_comparison['<']:
-                if smaller_phrase in generated_prompt:
-                    smaller_phrase_exists = True
-                    continue
-            self.assertTrue(smaller_phrase_exists)
-            generated_prompts.add(generated_prompt)
-        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
+        self.test_add_numerical_prompt(core_prompt)
+        self.test_name_regex_prompt(core_prompt)
+        self.test_other_property_prompt(core_prompt)
 
-        # test randomness for name regex prompt
+    def test_other_property_prompt(self, core_prompt):
+        ent_properties = [Property(name='cuisine', operator='=', value='italian'),
+                          Property(name='building material', operator='=', value='wooden'),
+                          Property(name='bridge', operator=None, value=None)]
+        generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                  entity_properties=ent_properties)
+        expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, building material: wooden, bridge'
+        self.assertEqual(generated_prompt, expected_prompt)
+
+    def test_name_regex_prompt(self, core_prompt):
         ent_properties = [Property(name='name', operator='~', value='Mc Donald')]
         generated_prompts = set()
         for i in range(self.randomness_limit):
@@ -113,15 +111,20 @@ class TestGPTGenerator(unittest.TestCase):
             generated_prompts.add(generated_prompt)
         self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
-        # test other properties such as cuisine
-        ent_properties = [Property(name='cuisine', operator='=', value='italian'),
-                          Property(name='building material', operator='=', value='wooden'),
-                          Property(name='bridge', operator=None, value=None)]
-
-        generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
-                                                                  entity_properties=ent_properties)
-        expected_prompt = 'Search area: Columbus, United States\nObj. 0: restaurant, cuisine: italian, building material: wooden, bridge'
-        self.assertEqual(generated_prompt, expected_prompt)
+    def test_add_numerical_prompt(self, core_prompt):
+        ent_properties = [Property(key='height', operator='<', value='10 meters', name='height')]
+        generated_prompts = set()
+        for i in range(10):
+            generated_prompt = self.prompt_helper.add_property_prompt(core_prompt=core_prompt,
+                                                                      entity_properties=ent_properties)
+            smaller_phrase_exists = False
+            for smaller_phrase in self.prompt_helper.phrases_for_numerical_comparison['<']:
+                if smaller_phrase in generated_prompt:
+                    smaller_phrase_exists = True
+                    continue
+            self.assertTrue(smaller_phrase_exists)
+            generated_prompts.add(generated_prompt)
+        self.assertLessEqual(len(generated_prompts), self.randomness_limit)
 
     def test_relative_spatial_terms(self):
         test_rel_1 = Relation(**{"name": "dist", "source": 0, "target": 1, "value": "1539 yd"})
