@@ -27,13 +27,13 @@ def remove_duplicate_tag_attributes(tag_attributes):
     return processed_tag_attributes
 
 
-class Tag(BaseModel):
+class Tag(BaseModel, frozen=True):
     key: str = Field(description="Tag property key")
     operator: str = Field(description="Tag property operator")
     value: str = Field(description="Tag property value")
 
 
-class TagAttribute(BaseModel):
+class TagAttribute(BaseModel, frozen=True):
     descriptors: List[str] = Field(description="List of text names")
     tags: List[Tag]  # MAYBE TAG INSTEAD???
 

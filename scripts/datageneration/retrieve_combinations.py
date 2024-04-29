@@ -112,13 +112,46 @@ class CombinationRetriever(object):
         tag_df.drop_duplicates(subset='descriptors', inplace=True)
         tag_df["index"] = [i for i in range(len(tag_df))]
         all_osm_tags_and_attributes = self.process_tag_attributes(tag_df)
+
+        self.tag_attributes = self.fetch_tag_attributes(tag_df)
         self.att_limit = att_limit
         self.tag_df = tag_df
         self.all_osm_tags_and_attributes = all_osm_tags_and_attributes
 
         self.all_tags_attributes_ids = self.all_osm_tags_and_attributes.keys()
         self.numeric_tags_attributes_ids = [f.split(">")[0] for f in filter(lambda x: x.endswith(">0"),
-                                                                       self.all_tags_attributes_ids)]
+                                                                            self.all_tags_attributes_ids)]
+
+    def fetch_tag_attributes(self, tag_df: pd.DataFrame) -> List[TagAttribute]:
+        '''
+        Process attributes from the Primary Key table (DataFrame)
+
+        Args:
+            tag_df (DataFrame): DataFrame containing tags and tag attributes
+
+        Returns:
+            list: List of TagAttribute objects
+        '''
+        tag_attributes_df = tag_df[tag_df['type'] != 'core']
+        tag_attributes = []
+        for tag_attr in tag_attributes_df.to_dict(orient='records'):
+            descriptors = split_descriptors(tag_attr['descriptors'])
+            splited_tags = split_tags(tag_attr['tags'])
+            processed_tags = []
+
+            for _tag in splited_tags:
+                _tag_splits = None
+                tag_operator = None
+
+                for seperator in SEPERATORS:
+                    if seperator in _tag:
+                        _tag_splits = _tag.split(seperator)
+                        tag_operator = seperator
+                        continue
+                processed_tags.append(Tag(key=_tag_splits[0], value=_tag_splits[1], operator=tag_operator))
+
+            tag_attributes.append(TagAttribute(descriptors=descriptors, tags=processed_tags))
+        return tag_attributes
 
     def process_tag_attributes(self, tag_df):
         """
@@ -222,76 +255,53 @@ class CombinationRetriever(object):
                     TagAttributeExample(key=key, examples=examples))
         return attributes_and_their_examples
 
+    def check_other_tag_in_attributes(self, other_tag: str) -> tuple:
+        '''
+        check if the combination in the attribute list
+        Args:
+            other_tag (str): e.g. name=, name~
+        Returns:
+            tuple(bool, int): True and its index in self.tag_attributes, False and its index -1 otherwise.
+        '''
+        print(f"checking {other_tag}")
+        exists = False
+
+        for tag_attr_idx, tag_attr in enumerate(self.tag_attributes):
+            for tag_attr_tag in tag_attr.tags:
+                tag_attr_tag_value = tag_attr_tag.value
+                if tag_attr_tag.value in ['***any***', 'yes', '***numeric***']:
+                    tag_attr_tag_value = ''
+                if f'{tag_attr_tag.key}{tag_attr_tag.operator}{tag_attr_tag_value}' == other_tag:
+                    exists = True
+                    return (exists, tag_attr_idx)
+
+        return (exists, -1)
+
     def request_related_tag_attributes(self, tag_key: str, tag_value: str, limit: str = 100) -> List[TagAttribute]:
         combinations = request_tag_combinations(tag_key=tag_key, tag_value=tag_value)['data']
         selected_attributes = []
         for combination in combinations:
             if len(selected_attributes) == limit:
                 return list(selected_attributes)
+
             for seperator in SEPERATORS:
-                other_tag = combination['other_key'] + seperator + combination['other_value']
+                exist_attribute, att_index = self.check_other_tag_in_attributes(
+                    other_tag=combination['other_key'] + seperator + combination['other_value'])
+                if exist_attribute:
+                    break
 
-                if other_tag in self.all_tags_attributes_ids:
-                    other_tag_type = self.all_osm_tags_and_attributes[other_tag]['type']
-                    if 'attr' in other_tag_type:
-                        selected_attribute = self.all_osm_tags_and_attributes[other_tag]
-                        # selected_attribute_split = selected_attribute.split(seperator)
-                        tags = [t.strip() for t in selected_attribute['tags'].split(",")]
-                        descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
-                        selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
-                        # selected_attributes.append(TagAttribute(key=selected_attribute_split[0], operator=seperator,
-                        #                                         value=selected_attribute_split[1]))
-                        continue
-                else:
-                    results = list(filter(lambda x: x.startswith(f"{other_tag}"), self.all_tags_attributes_ids))
-                    if len(results) == 0:
-                        rewritten_tag = ""
-                        if (combination['other_key'] in self.numeric_tags_attributes_ids and
-                                combination['other_value'].isnumeric()):
-                            if int(combination['other_value']) > 0:
-                                rewritten_tag = combination['other_key'] + ">0"
-                        if rewritten_tag == "":
-                            rewritten_tag = combination['other_key'] + seperator
+            if exist_attribute:
+                fetched_tag_attr = self.tag_attributes[att_index]
+                selected_attributes.append(fetched_tag_attr)
+            else:
+                print(f'{combination} does not exist')
+                if (combination['other_key'] in self.numeric_tags_attributes_ids and
+                        combination['other_value'].isnumeric()):
+                    if int(combination['other_value']) > 0:
+                        rewritten_tag = combination['other_key'] + ">0"
 
-                        results = list(
-                            filter(lambda x: x.startswith(rewritten_tag), self.all_tags_attributes_ids))
-
-                        if len(results) >= 0:
-                            for result in results:
-                                attribute_value = result
-                                other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
-                                if 'attr' in other_tag_type:
-                                    selected_attribute = self.all_osm_tags_and_attributes[attribute_value]
-                                    tags = [t.strip() for t in selected_attribute['tags'].split(",")]
-                                    descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
-                                    selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
-                                    # if ">0" in attribute_value[-2:]:
-                                    #     attribute_value_split = attribute_value.split(">")
-                                    #     selected_attributes.append(
-                                    #         TagAttribute(key=attribute_value_split[0], operator=">",
-                                    #                      value="0"))
-                                    # else:
-                                    #     attribute_value_split = attribute_value.split(seperator)
-                                    #     selected_attributes.append(
-                                    #         TagAttribute(key=attribute_value_split[0], operator=seperator,
-                                    #                      value=attribute_value_split[1]))
-                            continue
-
-                    else:
-                        for result in results:
-                            attribute_value = result
-                            other_tag_type = self.all_osm_tags_and_attributes[attribute_value]['type']
-                            if 'attr' in other_tag_type:
-                                selected_attribute = self.all_osm_tags_and_attributes[attribute_value]
-                                tags = [t.strip() for t in selected_attribute['tags'].split(",")]
-
-                                tags = [t.strip() for t in selected_attribute['tags'].split(",")]
-                                descriptors = [a.strip() for a in selected_attribute['descriptors'].split("|")]
-                                selected_attributes.append(TagAttribute(tags=tags, descriptors=descriptors))
-                                # attribute_value_split = attribute_value.split(seperator)
-                                # selected_attributes.append(
-                                #     TagAttribute(key=attribute_value_split[0], operator=seperator,
-                                #                  value=attribute_value_split[1]))
+                        print("rewritten tag")
+                        print(rewritten_tag)
         return selected_attributes
 
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:

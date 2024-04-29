@@ -105,6 +105,7 @@ class QueryCombinationGenerator(object):
 
             if max_number_of_props_in_entity >= 1:
                 candidate_attributes = selected_tag_comb['tag_attributes']
+                candidate_attributes = list(map(lambda candidate_attribute: TagAttribute(**candidate_attribute), candidate_attributes))
                 if len(candidate_attributes) == 0:
                     continue
                 max_number_of_props_in_entity = min(len(candidate_attributes), max_number_of_props_in_entity)
@@ -124,10 +125,9 @@ class QueryCombinationGenerator(object):
         candidate_indices = np.arange(len(candidate_attributes))
         np.random.shuffle(candidate_indices)
         selected_indices = candidate_indices[:num_of_props]
-
         tag_properties = []
         for idx in selected_indices:
-            tag_attribute = TagAttribute(**candidate_attributes[idx])
+            tag_attribute = candidate_attributes[idx]
             tag_property = self.property_generator.run(tag_attribute)
             tag_properties.append(tag_property)
 
