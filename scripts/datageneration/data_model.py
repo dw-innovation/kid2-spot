@@ -35,7 +35,7 @@ class Tag(BaseModel):
 
 class TagAttribute(BaseModel):
     descriptors: List[str] = Field(description="List of text names")
-    tags: List[str]  # MAYBE TAG INSTEAD???
+    tags: List[Tag]  # MAYBE TAG INSTEAD???
 
     # name: str = Field(description='This will be filled out from descriptors')
     # key: str = Field(description="Tag property key")

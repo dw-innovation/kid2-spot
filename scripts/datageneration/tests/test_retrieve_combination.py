@@ -3,7 +3,7 @@ import unittest
 from datageneration.retrieve_combinations import CombinationRetriever
 
 '''
-Execute it as follows: python -m datageneration.tests.test_retrieve_combination
+Execute it as follows: python -m unittest datageneration.tests.test_retrieve_combination
 '''
 
 
@@ -27,7 +27,6 @@ class TestCombinationRetriever(unittest.TestCase):
 
     def test_fetch_attributes_lanes(self):
         results = self.retriever.request_related_tag_attributes(tag_key='highway', tag_value='tertiary', limit=250)
-
         processed_results = []
         for result in results:
             processed_results.append(f'{result.key}{result.operator}{result.value}')

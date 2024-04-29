@@ -54,7 +54,7 @@ class PropertyGenerator:
         """
         return self.generate_non_numerical_property(tag_attribute)
 
-    def generate_non_numerical_property(self, tag_attribute):
+    def generate_non_numerical_property(self, tag_attribute) -> Property:
         descriptor = np.random.choice(tag_attribute.descriptors, 1)[0]
         tag = tag_attribute.tags[0]
         attribute_examples = self.select_named_property_example(tag)
@@ -86,7 +86,7 @@ class PropertyGenerator:
         # operator = "="
         operator = np.random.choice([">", "=", "<"])
         tag = tag_attribute.tags[0]
-        if tag.startswith("height"):
+        if tag.key == "height":
             # todo rename this
             generated_numerical_value = get_random_decimal_with_metric(99999)
         else:
