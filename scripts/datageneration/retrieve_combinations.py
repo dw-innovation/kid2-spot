@@ -263,7 +263,6 @@ class CombinationRetriever(object):
         Returns:
             tuple(bool, int): True and its index in self.tag_attributes, False and its index -1 otherwise.
         '''
-        print(f"checking {other_tag}")
         exists = False
 
         for tag_attr_idx, tag_attr in enumerate(self.tag_attributes):
@@ -293,15 +292,15 @@ class CombinationRetriever(object):
             if exist_attribute:
                 fetched_tag_attr = self.tag_attributes[att_index]
                 selected_attributes.append(fetched_tag_attr)
-            else:
-                print(f'{combination} does not exist')
-                if (combination['other_key'] in self.numeric_tags_attributes_ids and
-                        combination['other_value'].isnumeric()):
-                    if int(combination['other_value']) > 0:
-                        rewritten_tag = combination['other_key'] + ">0"
-
-                        print("rewritten tag")
-                        print(rewritten_tag)
+            # else:
+            #     print(f'{combination} does not exist')
+            #     if (combination['other_key'] in self.numeric_tags_attributes_ids and
+            #             combination['other_value'].isnumeric()):
+            #         if int(combination['other_value']) > 0:
+            #             rewritten_tag = combination['other_key'] + ">0"
+            #
+            #             print("rewritten tag")
+            #             print(rewritten_tag)
         return selected_attributes
 
     def generate_tag_list_with_attributes(self) -> List[TagCombination]:

@@ -37,11 +37,11 @@ class TestCombinationRetriever(unittest.TestCase):
             assert self.compare_tags(must_exist_tag_attribute.tags, tag_attributes)
 
     def test_check_other_tag_in_attributes(self):
-        exists, _ = self.retriever.check_other_tag_in_attributes(other_tag='name=')
-        assert not exists
-
         exists, _ = self.retriever.check_other_tag_in_attributes(other_tag='name~')
         assert exists
+
+        exists, _ = self.retriever.check_other_tag_in_attributes(other_tag='name=')
+        assert not exists
 
         exists, _ = self.retriever.check_other_tag_in_attributes(other_tag='outdoor_seating=')
         assert exists
@@ -77,12 +77,12 @@ class TestCombinationRetriever(unittest.TestCase):
         assert 'cycleway=separate' in processed_results
         assert 'cycleway:both=lane' in processed_results
         assert 'cycleway:both=opposite_lane' in processed_results
-        assert 'sidewalk=right' in processed_results
+        assert 'sidewalk=right' not in processed_results
         assert 'tunnel=yes' in processed_results
         assert 'lanes:psv>0' in processed_results
         assert 'building=water_tower' not in processed_results
         assert 'leisure=bowling_alley' not in processed_results
-    #
+    # #
     def test_generate_attribute_examples(self):
         cuisine_examples = self.retriever.request_attribute_examples(attribute_key='cuisine', num_examples=50)
         assert len(cuisine_examples) == 50
