@@ -116,14 +116,14 @@ class PropertyGenerator:
         Otherwise, it generates a named property.
         '''
         # if '***numeric***' in tag_attribute.value:
-        if any(t.endswith('***numeric***') for t in tag_attribute.tags):
+        if any(t.value == '***numeric***' for t in tag_attribute.tags):
             generated_property = self.generate_numerical_property(tag_attribute)
         else:
             # if 'name' in tag_attribute.key:
-            if any(t.startswith('name') for t in tag_attribute.tags):
+            if any(t.key == 'name' for t in tag_attribute.tags):
                 generated_property = self.generate_proper_noun_property(tag_attribute)
             # elif 'color' in tag_attribute.key:
-            if any(t.split(":")[-1].startswith('color') for t in tag_attribute.tags):
+            if any(t.key == 'color' for t in tag_attribute.tags):
                 generated_property = self.generate_color_property(tag_attribute)
             else:
                 generated_property = self.generate_named_property(tag_attribute)

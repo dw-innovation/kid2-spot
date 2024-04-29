@@ -49,8 +49,10 @@ class TestPropertyGenerator(unittest.TestCase):
 
     def test_other_type_property(self):
         # todo write an unit test, how the output would be
-        other_type_attribute = TagAttribute(**{"name": "highway", "operator": "=", "value": "passing_place"})
-        self.property_generator.run(other_type_attribute)
+        other_type_tag_attribute = TagAttribute(**{"descriptors": ["traffic signals", "traffic control", "traffic lights", "traffic lamps", "signal lights", "stop lights"], "tags": [
+            Tag(**{"key": "highway", "operator": "=", "value": "traffic_signals"})]})
+        other_property = self.property_generator.run(other_type_tag_attribute)
+        assert isinstance(other_property, Property)
 
     def test_color_property(self):
         pass
