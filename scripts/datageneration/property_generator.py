@@ -56,10 +56,8 @@ class PropertyGenerator:
 
     def generate_non_numerical_property(self, tag_attribute) -> Property:
         descriptor = np.random.choice(tag_attribute.descriptors, 1)[0]
-        tag = tag_attribute.tags[0]
+        tag = tag_attribute.tags[0].key + tag_attribute.tags[0].operator + tag_attribute.tags[0].value
         attribute_examples = self.select_named_property_example(tag)
-            # f'{tag_attribute.key}{tag_attribute.operator}{tag_attribute.value}')
-
         if not attribute_examples:
             return Property(name=descriptor)
             # return Property(key=tag_attribute.key, operator=tag_attribute.operator,value=tag_attribute.value, name=tag_attribute.value)
@@ -119,11 +117,9 @@ class PropertyGenerator:
         if any(t.value == '***numeric***' for t in tag_attribute.tags):
             generated_property = self.generate_numerical_property(tag_attribute)
         else:
-            # if 'name' in tag_attribute.key:
             if any(t.key == 'name' for t in tag_attribute.tags):
                 generated_property = self.generate_proper_noun_property(tag_attribute)
-            # elif 'color' in tag_attribute.key:
-            if any(t.key == 'color' for t in tag_attribute.tags):
+            elif any(t.key == 'color' for t in tag_attribute.tags):
                 generated_property = self.generate_color_property(tag_attribute)
             else:
                 generated_property = self.generate_named_property(tag_attribute)
