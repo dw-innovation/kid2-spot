@@ -56,8 +56,8 @@ opening an issue, or via email: lynn.khellaf@dw.com
 
 ## Publications
 
-Spot will be presented at the State-of-the-Map conference 2023 in Antwerp.
-The publication will be shared once available.
+Proceedings of OSM Science 2023: https://zenodo.org/records/10443346 (also available at https://arxiv.org/abs/2311.08093)
+Other publication will be shared once available.
 
 ## Acknowledgments
 
