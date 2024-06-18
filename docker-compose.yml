@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:5000"
+    restart: "always"
     env_file:
       - ./.env
 
@@ -15,6 +16,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:8080"
+    restart: "always"
     env_file:
       - ./.env
 
@@ -24,6 +26,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:8080"
+    restart: "always"
     env_file:
       - ./.env
     volumes:
@@ -37,6 +40,7 @@ services:
       - ES_JAVA_OPTS=-Xmx8g
     ports:
       - "9200:9200"
+    restart: "always"
     env_file:
       - ./.env
     networks:
