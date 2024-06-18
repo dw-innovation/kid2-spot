@@ -9,23 +9,12 @@ services:
     env_file:
       - ./.env
 
-  nlp:
-    build:
-      context: ./apis/nlp
-      dockerfile: Dockerfile
-    ports:
-      - "4000:8080"
-    volumes:
-      - ./volumes/nlp/model:/app/model
-    env_file:
-      - ./.env
-
   central_nlp:
     build:
       context: ./apis/kid2-spot-central-nlp-api
       dockerfile: Dockerfile
     ports:
-      - "4001:8081"
+      - "4000:8080"
     env_file:
       - ./.env
 
