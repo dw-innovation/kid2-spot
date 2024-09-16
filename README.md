@@ -23,7 +23,7 @@ The general idea of the pipeline is the following:
 1) Bundle similar tags, assign natural language descriptors to create better semantic connections between language and the OSM tagging system
 2) Generate random artificial queries including area definition, objects (incl. tags and descriptors) and relations/distances
 3) Call GPT API to generate artificial natural sentences from the draft
-4) Use T5 transformer to extract relevant information from sentences
+4) Use Llama3 to extract relevant information from sentences
 5) Perform Postgres query in OSM database & display in geographic map
 
 The GUI allows for the display of results of the natural language query
