@@ -1,0 +1,12 @@
+Bundle ID,Colour Descriptors,Colour Values
+1,"gray, light gray, dark gray, ash, slate, charcoal, dove gray, gunmetal, stone, cloudy, foggy, smoky, silver, metallic gray, steel, platinum, chrome, pewter, aluminum, shimmering gray","lightgrey, grey, light_gray, gray, darkgrey, #999999, #808080, #cccccc, dimgray, slategray, lightgray, #666666, #333333, #787878, , #B2B1A4, #696969, #C0C0C0, silver, #708090, #898885, #708090"
+3,"black, jet black, charcoal black, ebony, pitch black, onyx, midnight, coal","black, #000000, #333333"
+4,"white, off-white, ivory, snow, cream, alabaster, pearl, eggshell, chalk, ghost white","white, #ffffff, #FFFFFF"
+5,"red, light red, dark red, maroon, scarlet, crimson, ruby, cherry red, fire engine red, blood red, vermilion, rose red, brick red, burgundy, wine, dark red, oxblood, claret, garnet","red, #ff0000, maroon, firebrick, tomato, #c75d4d"
+6,"salmon, peach, coral, light red, pinkish-orange, apricot, blush, rose, pink, orange, tangerine, pumpkin, apricot, amber, burnt orange, carrot, persimmon, copper","salmon, pink, rose, #ffb5b5, #ff9e6b, orange, #be8988"
+8,"brown, chocolate, coffee, chestnut, cinnamon, mahogany, tawny, umber, sepia, mocha, russet","brown, tan, #a1634f, #85552E, #9c7870, #be8988, #c75d4d"
+9,"beige, tan, khaki, cream, sand, ecru, buff, fawn, light brown, pale taupe","beige, #dbd4c4, #bbad8e, #938870, #eecfaf, tan, #B2B1A4, #ffe0a0"
+10,"blue, light blue, navy, sky blue, royal blue, baby blue, cobalt, azure, cerulean, teal, indigo","blue, #3399FF"
+11,"green, lime, forest green, olive, emerald, mint, seafoam, jade, moss, chartreuse, sage, grass green","green, darkgreen"
+12,"yellow, light yellow, lemon, gold, mustard, saffron, pale yellow, amber, honey, buttercup, sunflower, canary yellow","yellow, lightyellow, #ffe0a0"
+13,"purple, dark purple, light purple, lavender, lilac, mauve, violet, amethyst, plum, eggplant, orchid, periwinkle, grape, magenta, iris",purple

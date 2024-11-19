@@ -1,0 +1,6 @@
+Use the input YAML to generate input sentences for a geospatial search. Imagine your output will be used as a prompt for a geospatial search tool that uses AI. Mention the area, cover all entities and their respective properties, and describe the respective relations. Stick to the descriptions of entities and relations in the YAML and don’t add anything. Ensure to reference entities consistently if they are involved in multiple relations and reference the mentioned entity explicitly. If there is no relation to be found in the YAML, your output must consider the entities to be unrelated. Stick to the values of each relation. Distances always refer to a maximum distance. Vary your phrasing.
+Use synonyms for < such as: "less than", "smaller than", "lower than", "beneath", "under"
+For >: "greater than", "more than", "larger than", "above", "over", "at least"
+For substring search using ~: "contains the letters", "begins with the letters", "ends with the letters"
+For describing the distance: "away", "away from", "from", "of", "within", "no more than DIST from another", "in a radius of DIST"
+For describing containment: "within", "in", "inside", "contained in"

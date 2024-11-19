@@ -1,0 +1,196 @@
+sentence
+Show me a Biergarten, please
+Find a Biergarten in Olt County. It is 33 feet from a parking space. There is a chash machine 51,34 yards away. 
+Show me all restaurants within 500 yards of a train station in Bretagne, France.
+Show me all caffes within 400 yyards of a police station in Shatoy, Chechen Republic, Russia. There should be a public trash can in front of the police station.
+Please show me a nice overview map of all planetariums you are aware of.
+I have a specific request regarding Praderas del Potrero. I want to find all music venues, community centers, and bars where the community center contains both the music venue and the bar. Please mark the results on the map.
+Focus on Arch, Swizerland. Find a restaurant within 1.5km of a buss station. Restaurant have should a public toilet inside.
+I looking for place where having a elementary schools containing a library and driving school next door.
+I am looking for a daycare within 5 miles of a zoo in Wilkinson County, Mississippi, United States.
+I look for a restaurant in Makkah, Saudi Arabia. I would like the restaurant to be either an မက်ဒေါ်နယ် or an ဘာဂါကင်း.
+I am look for a motel that are only 1 kilometer away from a swimming pool.
+Please find me a museum that is only 500 yards away from a motel in Barciany, Warmian-Masurian Voivodeship, Poland.
+I ma lookign for a clothing store in ស្មរ៉ុមណេដ្រេ តំបន់រាជធានីនៃប្រទេសដាណឺម៉ាក ? The cloting store should be a H&M.
+Go and locate a lighthouse in the dunes in Hesse, with a beach not more than 160m away from the lighthouse.
+Go to Powiat kolski, Poland fnd wastewatr plant
+Find all antiquities shops in Ash Shuhadā’, Monufia, Egypt
+Show me aparks that contain a football field with a fountaine not more than 12.4 yards away from it in Munich, Bavaria.
+Please find me all music venues in close distance to an artwork in Bay Harbor. The music venue is less than 0.5 miles away from a library.
+Find me forestry offices in Buzău County, Romania
+Please find me all elmentary schools with religous focus on sinto in Milverton, Unitde Kingdom. The elementary schools should be precisly 1 kilometer away from a roundabout. The round-about should have an accessible parking space and should be locayted at exactly 10 m from the clustre house.
+Search for all embankments in Ryazan Oblast.
+Please find me all motorcycle repair shops in Saitama Prefecture, Japan.
+Please find me a bow shooting that is not no more than fifty-two thousand meters from a bowling green in Antônio Prado, Brazil.
+Please find me all gambling dens that can be found in less than 0.5 miles from a vacant shop. The vacant shop is contained in a office building that has not more than 10 floors.
+I am searching for a an alcohol shop that is located within a refugee center in Jackson, South Carolina, United States.
+Find a christan church in City orf Norfolk, Virginia, United States. Its 500 yards form a firetower. The fire tower its less then 850 yards awy frm a housboat.
+Find a trench in Vrancea County.
+Lokup a gast station and a firehose within a 150m radius in בוואריה.
+I am trying to locate a houseboat that is anchored approximately 1km from a correctional facility. Inside the houseboat there is a gym. The gym is assigned the house number 21.
+Fnd socialfacility in Dâmbovița County, Romania. It has les than thre lvels. The name begnis wit "ole". There is a petrole station at 400metres from it. 300m away fom the station ist a fabric shop.
+Can you please help me locate a car rental shop in Lervik that is located no further from an embassy with a fire exit than 100 meters?
+Find a give-way-sign anda space airport 60km aparrt from each other in Costestii din Vale, Dâmbovita Country, Romania
+I'm looking for a lighthouse in a dune in Hesse. In a distance of more or less 160m from the lighthouse there is also a beach hut. Can you please find this spot for me.
+Bay Harbor has a library, a music venue and an artwork. The artwork can be found in close distance to the music venue, which is in turn, no less than 0.5 miles away from the library. Can you please find the the location that fits this search?
+Find me a Master Farma car shop with 2 floors. There is a bus stop next to the car shop. There is an aqueduct around 1.2 km from the car shop.
+In Ban Hoang, Vietnam is a hostel within campsite by Nhà nghỉ & Glamping that I want to find.
+I am searching for Giant bicycle store. It should be at most 5 km away from a florist. At the same time, it should be adjacent to an art store.
+In the area of Maranhão, find a charging station enclosed by a parking area that is not more than 100 yd from a medical facility.
+Look for a cathedral in São Paulo, Brazil within a 100 meter radius of an atm. There should be a fountain in the surroundings of the cathedral, no further away than 0.5km.
+Please search for a McDonalds in Hidalgo, Mexico.
+Search for a planetarium containing a public toilet. It should be within 85,800 yards of a public clock.
+Please find me a hospital within 300 meters to a pharmacy in Trappes, Île-de-France, France. Further, a chapel should be within a 2,2km distance.
+Please look for an Australian Football Field containing a smoking area within 5km of a Wi-Fi Hotspot.
+search at Plomelin, France. School next to a bicycle parking area. School not far from airport. airport 5 km from school only distance.
+Please find me a cable station in Savannakhet Province, Laos, that is not more than 10 km away from the airport. Preferably, it should also have an outside seating area.
+Find a bicycle repair station in my area
+Find the nearest bar in Tennessee.
+Search for a car rental in Lamarque, Nouvelle-Aquitaine, France, up to 5 yd away from an airport with a pub.
+Looking for a school in Bayan-Ölgii Province, 7 miles away from an airport with an eatery nearby.
+Find me a cafe in Nouvelle-Aquitaine not far away from a driving school, at most 5 km from a taxi stand.
+Is there a bank next to a change offic within 55 metres from a mony transfer in Port Moresby, Papua New Guinea.
+Can you show all sand tracks at the lake where a restaurant is less than 50 metres away?
+Please look for a corn farm in Olt County. This farm should be opposite from a gas station. The gas station is 50 metres next to a railway. 
+Is there an Esso gas station in Pennsylvania, US
+Is there a castle next to a forest in Arrondissement de Port-de-Paix? Show me only those castles which are on a hill and next to the forest. 
+Is there a 지멘스 power plant in Coruia, Maramures Country, Romania? And is it 50.50 metres away from a tower? 
+Please find drinking water within 100m from a hotel in Tovuz, Tovuz District, Azerbaijan
+Is there a post office in Stevens County, United States
+Is there an office of an estate agent called Deutsche Wohnen in this area? Show me only those office which are on the ground floor of a building.
+Is there a chess game 10 metres away from a bistro outdoor seating in a park in Kadayanallur, India?
+Is there an office of a political party nearby with a pub at least 50.5 metres away from each other in the vicinity Agusan del Norte, Philippines?
+Is there a horse riding center two kilometers from a swimming pool and a lake in Country Park, Italy?
+Is there a recycling plant nearby a gas station which is 100.34 meters away from an airport?
+I am searching for a youth center in Vitebsk Region. The youth center is 100 meters away from a fire tower. There should be a post office in front of the youth center.
+I am looking for a marketplace in  واہاكا, n 0.05 ft away from an internet cafe that contains an ATM.
+Loking for discounter in Lombrady. Must be 100 metres way from a medical suppy store. There shuld be also hairdresser close to the discounter and the medical supply store.
+I am searching for a shopping mall in Albanel, Canada. The shopping mall contains an alcohol shop and a bakery.
+I am looking for a nursing home which is close to a post offize and 1,01 ft away from a public toilet in Lublin Voivodeship.
+I am searching in Kornwestheim, Baden-Württemberg in Germany. Please find me a street lamp within 400 meters from an emergency telephone.
+I search a trench in Vrancea County.
+I am looking for a motorcycle repair shop in the Saitama Prefecture, Japan.
+Find me a pertrol statsion that is 400 meters way from a social facility less than 3 building levels high and with a name that begins with "ole". The ptrl station is 300 miter froma fabrc shop in Dâmbovița County, Romario.
+I am looking for a vacant shop within an office building of less than 10 floors. There is a gambling den that is 0.5 miles from the vacant shop.
+I am looking for a brick made pergola of less than 2 meters high that is 50 meters away from high-rise apartments (house number 384-A) that have a charging base in it, this should be in Al Adl, Makkah, Saudi Arabia.
+I am looking for a give way sign in Costeştii din Vale, Dâmbovița County, Romania that is within a radius of 60 km of a space airpotr.
+In Austin, Texas, pls find me a rental shop that is within 70 meters from the city limit sign. The rental shop is more or less 3 miles from a military range.
+I is searching in La Bégude-de-Mazenc. Find second hand shop inside a hotel. Hotel has building number 76. A storage rental is less than eight hundred yards from second hand shop.
+Find Mural, 300 yards form Burger King restaurant with pakring spotts in Laborde, Cordoba, Argentina
+Find me a car shop with 2 floors called Master Farma next to a bus stop. The car shop must be 1.2 kilometers away from an aquaduct.
+I am searching for a gym on a houseboat. The gym has housenumber 21. There is a correctional facility that is more or less 1 kilometer away from the houseboat.
+Find a speet kamera within 100 meater from antenna in Paraiba.
+Find me an elemntary school with the shinto relegion that is arount 1 kilometer away from a round-about. The round-about has accessible parking space. The roundabout is 10 meters away from an apparttmentt building. All of this is in Milverton, United Kingdom.
+I am loking for a sprots shop that is innside an outdoor fitness within one tousand tree hundred feet from high-speed train tracks in Anjouan, Comros.
+I am looking for a TV studio in Hilversum, Netherlands.
+Find mi a Kristian Church, feive hundred yards from a fre tower. The fire tower is within 850 yeards from a hausboat in the City of Norfolk, Virginia, US.
+Hello SPOT, can you please help me? I am looking for a seaport with both an overhead crane and a lift gate in it.
+I am searching for an Australian Football Field in Perth with a public outdoor grill in there, there is a power plant on 2 km distance from the Australian Football Field.
+Find us an elephant path less than 150 m from a scientific research institute in Thailand.
+Find me a bow shooting and a bowling green within fifty-two thousand meters from each other in Antônio Prado, Brazil.
+Show me a cycl stand an a fire hydrant on a colllege campus in Las Calavveras, Mexiko
+Find me parking spaces nearby a gas station less than 500 meters away from a taxi stand in Monte das Gameleiras, Brazil
+Find me parking spaces at a gas station less than 100.50 meters away from a taxi stand in Cundinamarca, Colombia.
+I am looking for a medical centre in Jalisco, Mexico with several options. On the grounds of this centre there is a public phone about 50 feet from a pharmacy.
+Find a trading centre in Parfinskiy Rayon, Russia with a post office and a public bathroom
+Find me an elementary school that is within four miles from a charging station.
+Please find me a public library with a coffee bar and outdoor seating in Comuna Stoicăneşti
+Find me a police station in Canterbury Region, New Zealand. It should be accessible from the street
+I am looking for an amusement arcade in the East Attica Regional Unit, Greece, with a fire hydrant 15 yards in front of the building
+I am looking for locations. I searching for an communications tower who is located within construction site. The aforementioned tower are locate in close distances to H&M.
+Find me a location with a public bookcase in front of bicycle shop, with the bicycle shop is around 1.5 miles from a water park.
+I am searching for a location that fulfils the following requirements in Horní Čermná, Pardubický kraj, Czech Republic. It features a large car park, which is located at an approximately 500 yard distance from a fashion boutique.
+There is canal that is ~ 600yd from boat dock. The boat dock are also surrounded from grassland.
+Please identify the exact location of a Funeral Home that is 500 yd away from a flower store and 1.6 mi from a highway link in အင်္ဂလန်၊ ယူနိုက်တက်ကင်းဒမ်း.
+I'm searching for sports center that contains a swimming pool and a baseball field, in Rivière du Rempart, Mauritius.
+Find a pharmacy in Maclean, New South Wales, Australia. The pharmacy is 130,5 yd from the entrance to a book store.
+Find me a church in Bavaria from where I can reach a supermarket in 500 m and see a mountain within 2 km.
+Please identify the exact location of a restaurant that is next to a bus stop and 250 yd from a historic monument.
+Please find me a doctor within 100 meters form a health centre and next to a dentist in Rogaland, Norway.
+Plase find a boat rentl place in Garbagna Novarese that i 300 meters from a car wash and a MC唐納斯.
+Please find me in Windsor, United States, a car rental. The car rental  is next to pub and within 200 meters an ice cream parlor
+Please find a music venue in Country Park, Italy that is 100 meters from a nursing home and a kiosk.
+A community center in Coruia, Maramureș County, in Romania within 200 meters of a planetarium. Within 1 km there is a 맥도날드.
+Please find me a cafe and an ice cream parlor within a radius of 100 meters to each other in the Tovuz District in Azerbaijan.
+Please find me a research Institute in Stevens County, United States.
+Please find a pharmacy that is 50 meters from a tax stand and close to a health car center in Kadayanallur, India. 
+I am loking for an air twer in Port Moresby in Papua New Guinea that is 50 metrs from a car wash and I can se a youth center on the opposite side.
+In the area of Olt County, please find me a cable car station within 500 meters from a railway station. There is also a car park at the railway station.
+I am looking for an italian restaurant with outdoor seating, the restaurant is within 300 meters from train tracks and a railway bridge.
+Please find me a driving school in Pennsylvania, United States, in 150 metres distance of a McDonald's.
+In New Delhi, India, there is a coffee place called "In Dia" with outdoor seating, 50 meters away from a pharmacy and a historic monument. Can you find that for me please?
+Where in South Dakota can I find a nepalese restaurant less than 350 yards away from a jewish synagogue?
+I can see an H&M just about 100 meters away from a  greek restaurant with outdoor seating
+Look for a church tower that is less than 130m high.
+There is a kiosk with the name ending in *signa 10 yards away from a bus stop and a subway station in Manila.
+Find me all historic monuments that are not higher than 30m and within a park in Luang Prabang, Laos.
+Next to a tram stop named "center" is a cafe with outdoor seating, just 120 meters away from a Burger King.
+I'm looking for a supermarket from a brand ending in "ermarché" with a parking lot next to it and a power line running past it in less than 15 meters distance.
+find me a parking space within 200 meters from a communication tower and a power tower in legnago
+find me a pakistani restaurant close to Kebabland, ontaro, canada
+find me a beach within of 70 meters distance from a bar on lake como in italy
+find me a recreation area close to deutsche welle, bonn, germany
+find me a bus stop close to a church and a train station in pulheim
+find me a football pitch close to the water in quito
+find me a hotel 400 meters of a watersport center and roundabout
+show me playgrounds in this area
+a 711 near a liquor store in the vicinity of an airport in new york 
+all furniture stores in shanghai
+all gambling halls in berlin within 300 meters of a bakery
+find a bus stop next to a mcdonald's and a mosque in beirut, lebanon
+find a bus stop and a supermarket next to dw in berlin
+there is a park in izmir that contains a soccer field with a small hut with a red roof next to it.
+find me all hydroelectric power plants next to a bridge and a pipeline next to it
+i sm looking for a fountain in a park in stuttgart
+find me a fountain next to a library in maastricht
+i am looking for a traffic light that is close to a museum in ulaanbaatar
+find me a copyshop close to a university building
+find me a park with a fountain in stuttgart close to a thalia
+find me a spring in amsterdam infront of a building with a glass roof
+find me a a restaurant called "pizza express" near a mcdonalds and tram station 
+find me a Five Guys close to a pasta paradise in venezuela
+find me a a restaurant called "señor verde" near a peppino restaurant and bus station in french guiana
+find me a trainstation next to a wendy's in captown
+find me a bus platform next to a cheesecake factory restaurant and a building with a red roof in dubrovnic
+find me a hotel inside 200 meters of a roundabout and a shopping center at the island of djerba, tunesia
+find me a club within 2.5 kilometers of a diving school and a beach volleyball field on the island of montreal, canada
+find me a hotel not more than 2.8 miles from streetart on hawaii
+find me art gallery on isla de roberto, colombia
+find in beirut shops for mobile phones
+find in rabat hispitals
+a commercial near a gas station andorra
+find me a hospital next to a co-working space in essen, germany
+i'm lloking for a seafood restaurant with 2 floors next to the beach on sardinia, italy
+show me all kiosks within 500m of a park in cologne
+show me all towers less that 50m high that are within 100m of a river in cologne, germany
+show a rotary near the port 
+Please show me all railways that are in a cutting
+I am look for dark orange bench located in playground
+I looking for softball field in नई दिल्ली
+show all alpine huts with blue walls that are located in winter sports areas
+trying to find a супер фритерлер location with mountain range nearby in kyrgyz republic
+Please help me find a Cortina ice cream parlor that serves vegan ice cream and has a public bathroom
+all locations of ملك الفلافل which is opposite from Eiffel cafe with black roof in Algier 
+I am looking for an interstate highway running through a cutting that is surrounded by a wind farm
+I'm trying to find a halal butcher in a mall that has elevators and steel walls
+there is a wooden shrine 69.69 yards from a pale blue streetlamp and a lucky burger in ភ្នំពេញ ប្រទេសកម្ពុជា
+there is an autobahn labelled A3 with a car-pool lane in a forest
+in berlin, find a georgian bistro located adjacent to a diving school
+please show me the mcdonald's convenience stores you can find in Ασπρόπυργος
+find fo me a eating place taht serves mongolian food
+show all tram tracks that run besides peruvian fast food restaurants
+where in serbia can I find a Код Јонуза restaurant location? 
+all Don Quijote that are in a retail building with a purple roof coluor in 東京都
+a building with a tin roof
+show me a elementary school with a red roof
+Show me all 燒烤場 in Foshan, Guangdong, China
+I'm trying to find all པ་སྟའི་ཕོ་བྲང་། eateries in གཡའ་རྒྱ།
+im lookign for a pharmaceutical dispensary whose name starts with "byouk" in düsseldorf
+locate me a motorcycle rental place that has the letters ກີຢາ in its name
+show me all country roads with more than two lanes
+find me the dual carriage highway which have more than 3 lanes in each direction which is also a toll road
+show me all hangars located in military bases
+all communications masts in airfields in beirut
+there is a shipdock. contained in the shipdock is a storage tank.
+there is an island called Κάλυμνος which is part of greece
+there is a Kitti Chai restaurant next to a Vegan Land
