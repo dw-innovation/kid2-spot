@@ -1,0 +1,14 @@
+pandas==2.2.0
+taginfo==0.0.3
+tqdm==4.66.1
+diskcache==5.6.3
+requests==2.31.0
+openpyxl==3.1.2
+pytest==8.0.0
+backoff==2.2.1
+openai==1.11.1
+python_dotenv==1.0.1
+jsonlines==4.0.0
+pyyaml==6.0.1
+num2words==0.5.13
+webcolors==24.8.0
