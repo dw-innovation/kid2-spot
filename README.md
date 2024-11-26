@@ -36,7 +36,7 @@ The pipeline operates as follows:
    The GPT API generates artificial natural language sentences from the the artifical queries. The generated sentences are used for fine-tuning Llama3.
 
 4. **🔍 Extract Relevant Information**  
-   Llama3 parse the generated sentences for constructing queries. 
+   Llama3 parse the generated sentences for constructing queries and the queries are enriched with their OSM tag which are fetched from a vector-based search engine.
 
 5. **🗄️ Perform Database Query**  
    PostgreSQL queries the OSM database to fetch relevant data, which is then displayed on a geographic map.
