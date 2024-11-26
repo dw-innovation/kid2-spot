@@ -33,10 +33,10 @@ The pipeline operates as follows:
    Random artificial queries are created, including area definitions, objects (with tags and descriptors), and relationships/distances.
 
 3. **📝 Generate Natural Sentences**  
-   The GPT API generates artificial natural language sentences from the drafts.
+   The GPT API generates artificial natural language sentences from the the artifical queries. The generated sentences are used for fine-tuning Llama3.
 
 4. **🔍 Extract Relevant Information**  
-   Llama3 extracts pertinent details from the generated sentences.
+   Llama3 parse the generated sentences for constructing queries. 
 
 5. **🗄️ Perform Database Query**  
    PostgreSQL queries the OSM database to fetch relevant data, which is then displayed on a geographic map.
