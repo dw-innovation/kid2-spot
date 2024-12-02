@@ -57,7 +57,8 @@ The graphical user interface in Spot is a dynamic and versatile Next.js Leaflet 
 
 ### 🎥 Demo
 
-Watch the demo video to see Spot in action:  
+Watch the demo video to see Spot in action:
+
 https://github.com/dw-innovation/kid2-spot/assets/23077479/110e3ef0-6fc6-4458-907a-0af5fa377370
 
 ---
