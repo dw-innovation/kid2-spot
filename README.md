@@ -96,6 +96,6 @@ To participate or contact us, please open an issue or email us at:
 
 ## 🙏 Acknowledgments
 
-This project is led by Deutsche Welle's Research and Cooperation Projects teams and co-funded by BKM ("Beauftragte der Bundesregierung für Kultur und Medien", the German Government’s Commissioner for Culture and Media).
+This project is led by [Deutsche Welle's Research and Cooperation Projects](https://innovation.dw.com) team and co-funded by BKM ("Beauftragte der Bundesregierung für Kultur und Medien", the German Government’s Commissioner for Culture and Media).
 
 Map data © OpenStreetMap contributors, available at [OpenStreetMap](https://www.openstreetmap.org).
