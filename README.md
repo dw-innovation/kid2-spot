@@ -33,7 +33,7 @@ The pipeline operates as follows:
    Random artificial queries are created, including area definitions, objects (with tags and descriptors), and relationships/distances.
 
 3. **📝 Generate Natural Sentences**  
-   The GPT API generates artificial natural language sentences from the the artifical queries. The generated sentences are used for fine-tuning Llama3.
+   The GPT API generates artificial natural language sentences from the artificial queries. The generated sentences are used for fine-tuning Llama3.
 
 4. **🔍 Extract Relevant Information**  
    Llama3 parse the generated sentences for constructing queries and the queries are enriched with their OSM tag which are fetched from a vector-based search engine.
