@@ -6,6 +6,13 @@ Spot is a natural language interface designed to query OpenStreetMap (OSM) data 
 
 ---
 
+## Public Beta
+
+A public beta is available in case you want to test the application yourself. Please find it here: https://www.findthatspot.io/
+
+It is greatly appreciated if you use the integrated feedback form or Github issues to report any bugs or thoughts that might be helpful for the further development.
+
+---
 ## How it Works
 
 Spot allows users to find locations that meet specific requirements by prompting the system with a natural language sentence. The process works as follows:

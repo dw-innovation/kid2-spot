@@ -1,5 +1,22 @@
 # Changelog
 
+---
+
+## Version 1.1.0 (first public beta release) 
+
+### **New Features**
+- **Properties**: Added colors (including roof and building colors), e.g., a “brown (bench).”
+- **OSM Expert Editor**: Added the first version of an editor to update and add tags to existing OSM queries in the GUI.
+- **Feedback Form**: Added a form to the GUI to allow users to give direct feedback.
+
+### **Fixes**
+- **New Training Data**: Better entity and property detection via improvements to data generation and training parameters.
+
+### **Work in Progress**
+- **Laid Groundwork for Entity Clusters**: Ability to generate training data for clusters of entities, allowing queries like "3 Italian restaurants next to each other" or "at least 5 wind generators in a radius of 200 m." This feature will be available in a future model iteration.
+
+---
+
 ## Version 1.0.0
 
 ### **New Features**
@@ -44,18 +61,3 @@
 
 ### **Fixes**
 - No fixes in version 1.0.0.
-
----
-
-## Version 1.1.0 (first public beta release) 
-
-### **New Features**
-- **Properties**: Added colors (including roof and building colors), e.g., a “brown (bench).”
-- **OSM Expert Editor**: Added the first version of an editor to update and add tags to existing OSM queries in the GUI.
-- **Feedback Form**: Added a form to the GUI to allow users to give direct feedback.
-
-### **Fixes**
-- **New Training Data**: Better entity and property detection via improvements to data generation and training parameters.
-
-### **Work in Progress**
-- **Laid Groundwork for Entity Clusters**: Ability to generate training data for clusters of entities, allowing queries like "3 Italian restaurants next to each other" or "at least 5 wind generators in a radius of 200 m." This feature will be available in a future model iteration.
