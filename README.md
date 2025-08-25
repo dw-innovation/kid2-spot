@@ -102,7 +102,7 @@ To participate or contact us, please open an issue or email us at:
 - **Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics**:  
   [ACL Link](https://aclanthology.org/2025.acl-demo.8.pdf) | [arXiv Link](https://arxiv.org/abs/2506.13188)
 
-  Additional publications will be shared as they become available.
+Additional publications will be shared as they become available.
 
 ---
 
