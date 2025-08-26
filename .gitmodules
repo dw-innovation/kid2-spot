@@ -13,12 +13,6 @@
 [submodule "apis/kid2-spot-central-nlp-api"]
 	path = apis/kid2-spot-central-nlp-api
 	url = https://github.com/dw-innovation/kid2-spot-central-nlp-api.git
-[submodule "datageneration"]
-	path = datageneration
-	url = https://github.com/dw-innovation/kid2-spot-datageneration
-[submodule "unsloth-training"]
-	path = unsloth-training
-	url = https://github.com/dw-innovation/unsloth-training
 [submodule "data_and_training/unsloth-training"]
 	path = data_and_training/unsloth-training
 	url = https://github.com/dw-innovation/unsloth-training
