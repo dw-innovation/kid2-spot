@@ -1,3 +1,5 @@
+<img width="1280" height="200" alt="Github-Banner_spot" src="https://github.com/user-attachments/assets/bec5a984-2f1f-44e7-b50d-cc6354d823cd" />
+
 # 🌍 KID2 Spot Application
 
 ## Introduction
