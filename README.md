@@ -76,7 +76,7 @@ https://github.com/dw-innovation/kid2-spot/assets/23077479/110e3ef0-6fc6-4458-90
 
 ## 🚀 Call for Participation
 
-Spot is an open-source project, with its code and (eventually) its website freely available to the public. We invite contributors, particularly those with expertise in the OSM tagging system, to collaborate with us.
+Spot is an open-source project, with its code and its [website](https://www.findthatspot.io) freely available to the public. We invite contributors, particularly those with expertise in the OSM tagging system, to collaborate with us.
 
 ### Potential Contribution Areas
 
