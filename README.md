@@ -112,6 +112,18 @@ Please see [CONTRIBUTING.md](../shared_docs/CONTRIBUTING.md) to get started.
 
 ---
 
+## 🔗 Related Docs
+
+- [Main SPOT Repo](https://github.com/dw-innovation/kid2-spot)
+- [Frontend UI](https://github.com/dw-innovation/kid2-spot-frontend)
+- [Central NLP API](https://github.com/dw-innovation/kid2-spot-central-nlp-api)
+- [OSM Tag Search API](https://github.com/dw-innovation/kid2-spot-osm-tag-search-api)
+- [OSM Query API](https://github.com/dw-innovation/kid2-spot-osm-query-api)
+- [SPOT Datageneration](https://github.com/dw-innovation/kid2-spot-datageneration)
+- [Unsloth Training Script](https://github.com/dw-innovation/unsloth-training)
+
+---
+
 ## 🛡 License
 
 This project is licensed under the **GNU AGPLv3**.  
