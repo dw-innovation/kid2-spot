@@ -1,115 +1,120 @@
 <img width="1280" height="200" alt="Github-Banner_spot" src="https://github.com/user-attachments/assets/bec5a984-2f1f-44e7-b50d-cc6354d823cd" />
 
-# 🌍 KID2 Spot Application
+# 🌍 SPOT: Natural Language Interface to OpenStreetMap
 
-## Introduction
+**Describe a place, get a map of matching locations.**  
+SPOT is an open-source tool that lets you search the world using natural language. It turns user queries into geospatial searches over OpenStreetMap (OSM) data — with no code or tagging knowledge required.
 
-Spot is a natural language interface designed to query OpenStreetMap (OSM) data and identify "Spots" – combinations of objects in public space. By leveraging a transformer model, users' natural language inputs are translated into OSM database queries. While its primary use case is geo-location verification, the application can be adapted to other scenarios as well.
-
----
-
-## Public Beta
-
-A public beta is available in case you want to test the application yourself. 
-
-Please find it here: https://www.findthatspot.io/
-
-It is greatly appreciated if you use the integrated feedback form or Github issues to report any bugs or thoughts that might be helpful for the further development.
-
----
-## How it Works
-
-Spot allows users to find locations that meet specific requirements by prompting the system with a natural language sentence. The process works as follows:
-
-1. **💬 Natural Language Input**: Users describe their requirements using a natural language sentence. 
-2. **🔗 Graph Representation**: Spot transforms the sentence into a graph representation that captures all objects, their properties, and the relationships between them.
-3. **🗺️ OSM Tag Retrieval**: The system maps the identified properties to OpenStreetMap (OSM) tags. This is achieved using Elasticsearch, which leverages predefined tag bundles along with openly available OSM tag data.
-4. **⚙️ Database Query Construction and Execution**: Using the Spot query, a database query is constructed and executed against a local replica of OSM data.
-5. **📍 Results Rendering**: The query results are rendered in the frontend, allowing users to visually explore the locations that satisfy their requirements.
-
-The KID2 Spot application comprises a collection of repositories and scripts. For detailed information, please refer to the README pages of the respective subtasks and repositories.
-
-![Spot Pipeline](https://github.com/dw-innovation/kid2-spot/blob/main/media/Spot-Pipeline.png?raw=true)
+[➡️ Try the Demo](https://www.findthatspot.io/)  
+[📽️ Watch the Demo Video](https://github.com/dw-innovation/kid2-spot/assets/23077479/110e3ef0-6fc6-4458-907a-0af5fa377370)
 
 ---
 
-### Pipeline Overview
+## ✨ Key Features
 
-The pipeline operates as follows:
-
-1. **🧩 Bundle Tags and Assign Descriptors**  
-   Similar tags are grouped, and natural language descriptors are assigned to establish better semantic connections with the OSM tagging system.
-
-2. **🔀 Generate Artificial Queries**  
-   Random artificial queries are created, including area definitions, objects (with tags and descriptors), and relationships/distances.
-
-3. **📝 Generate Natural Sentences**  
-   The GPT API generates artificial natural language sentences from the artificial queries. The generated sentences are used for fine-tuning Mistral.
-
-4. **🔍 Extract Relevant Information**  
-   Mistral parse the generated sentences for constructing queries and the queries are enriched with their OSM tag which are fetched from a vector-based search engine.
-
-5. **🗄️ Perform Database Query**  
-   PostgreSQL queries the OSM database to fetch relevant data, which is then displayed on a geographic map.
+- 🔎 Natural Language → Structured Geospatial Search
+- 🧠 Fine-tuned open LLMs (Mistral, LLaMA3) interpret scene descriptions
+- 🏷️ Semantic bundling of OSM tags using Elasticsearch
+- 🗺️ Interactive map frontend (Next.js + Leaflet)
+- 💾 Dockerized architecture with multiple composable modules
+- 📚 Open source & published under **AGPLv3**
 
 ---
 
-### 🖥️ Front-end Functionality
+## 📝 OSM Tag Bundles – Check & Suggest
 
-The graphical user interface in Spot is a dynamic and versatile Next.js Leaflet map application. It offers multiple map layers, including satellite imagery, OpenStreetMap (OSM), and vector tiles, providing users with a flexible and interactive mapping experience. The key features include:
+SPOT relies on a curated list of OSM tag bundles to interpret user queries correctly. If you notice a query doesn’t work as expected, it might be due to a missing or mismatched tag.
 
-- **📌 Rendering Results on the Map**: The results of natural language queries are visualized directly on the map, allowing users to identify relevant locations.
-- **🔗 Exploring Candidate Locations**: Users can investigate specific locations by integrating third-party map services, such as opening Google Maps or Google Street View at specified coordinates.
-- **🛠️ Refining Search Queries Visually**: The interface enables users to adjust search parameters visually, such as modifying distance relations between objects.
-- **💾 Session Management**: Users can save their current search sessions for future use or load previously saved sessions.
-- **📤 Exporting Map Data**: The system supports exporting map data in various formats, enabling users to work with the data in external tools or applications.
+[📄 View the tag bundles list (CSV)](./SPOT_OSM-tag-bundles.csv)  
+[💬 Submit a suggestion or correction → Pinned Issue](https://github.com/dw-innovation/kid2-spot/issues/12#issue-3606799099)  
 
 ---
 
-### 🎥 Demo
+## 📦 Architecture Overview
 
-Watch the demo video to see Spot in action:
+SPOT is composed of several Dockerized modules, managed centrally:
 
-https://github.com/dw-innovation/kid2-spot/assets/23077479/110e3ef0-6fc6-4458-907a-0af5fa377370
-
----
-
-## 🚀 Call for Participation
-
-Spot is an open-source project, with its code and its [website](https://www.findthatspot.io) freely available to the public. We invite contributors, particularly those with expertise in the OSM tagging system, to collaborate with us.
-
-### Potential Contribution Areas
-
-- Enhancing the tag bundle database to expand its scope and improve quality.
-- Developing better GPT prompts for more diverse natural language outputs.
-- Coding and advancing model development.
-- Conducting user testing.
-- And more!
-
-If you're interested in contributing, please get in touch via this repository.
+```
+kid2-spot/
+├── frontend/                 # Map-based UI
+├── apis/
+│   ├── osmquery/             # Queries local OSM DB
+│   ├── osmtagsearch/         # Maps phrases to OSM tag bundles
+│   └── central-nlp-api/      # Orchestrates inference & pipeline
+├── data_and_training/
+│   ├── datageneration/       # Synthetic data generation
+│   └── unsloth-training/     # LLM training pipeline
+└── docker-compose.yml        # Orchestrates all services
+```
 
 ---
 
-## 📬 Contact
+## 🔧 Configuration
 
-To participate or contact us, please open an issue or email us at:  
-[lynn.khellaf@dw.com](mailto:lynn.khellaf@dw.com)
+- See **[ENVIRONMENT.md](./ENVIRONMENT.md)** for service ports and module env variables.
+- See **[SECURITY.md](../shared_docs/SECURITY.md)** for secrets handling best practices.
+
+---
+
+## 🚀 Quickstart
+
+To clone and run the full project locally:
+
+```bash
+git clone --recurse-submodules https://github.com/dw-innovation/kid2-spot.git
+cd kid2-spot
+docker compose up --build
+```
+
+> Note: Make sure Docker has enough memory and disk space. You may need to configure `.env` files (see submodule READMEs).
 
 ---
 
 ## 📚 Publications
 
-- **Proceedings of OSM Science 2023**:  
-  [Zenodo Link](https://zenodo.org/records/10443346) | [arXiv Link](https://arxiv.org/abs/2311.08093)
-- **Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics**:  
-  [ACL Link](https://aclanthology.org/2025.acl-demo.8.pdf) | [arXiv Link](https://arxiv.org/abs/2506.13188)
-
-Additional publications will be shared as they become available.
+- **ACL 2025 Demo Paper**: [aclanthology.org/2025.acl-demo.8](https://aclanthology.org/2025.acl-demo.8)
+- **OSM Science 2023**: [arXiv](https://arxiv.org/abs/2311.08093)
 
 ---
 
-## 🙏 Acknowledgments
+## 🧠 Submodules Overview
 
-This project is led by [Deutsche Welle's Research and Cooperation Projects](https://innovation.dw.com) team and co-funded by BKM ("Beauftragte der Bundesregierung für Kultur und Medien", the German Government’s Commissioner for Culture and Media).
+| Module                  | Description                                           |
+|-------------------------|-------------------------------------------------------|
+| `frontend`              | Map UI (Leaflet + Next.js)                            |
+| `central-nlp-api`       | Converts NL → YAML → OSM tags                         |
+| `osm-tag-search-api`    | Maps phrases to OSM tag bundles (Elasticsearch)       |
+| `osm-query-api`         | Executes spatial query on local OSM DB                |
+| `datageneration`        | Synthetic YAML/sentence generator for training        |
+| `unsloth-training`      | Training script for open LLMs                         |
 
-Map data © OpenStreetMap contributors, available at [OpenStreetMap](https://www.openstreetmap.org).
+Each module has its own README file. You can also run each independently for debugging.
+
+---
+
+## 🎥 Demo Video
+
+[![Watch the demo](https://img.youtube.com/vi/N-A/0.jpg)](https://github.com/dw-innovation/kid2-spot/assets/23077479/110e3ef0-6fc6-4458-907a-0af5fa377370)
+
+---
+
+## 🧑‍💻 Contributing
+
+We welcome contributors from all backgrounds – developers, mappers, researchers, journalists!
+
+Ways to help:
+- Improve tag bundles or suggest new ones
+- Help with frontend or UX design
+- Add tests or documentation
+- Improve prompts or training data
+
+Please see [CONTRIBUTING.md](../shared_docs/CONTRIBUTING.md) to get started.
+
+---
+
+## 🛡 License
+
+This project is licensed under the **GNU AGPLv3**.  
+If you improve SPOT, please share your changes with the community.
+
+© Deutsche Welle Research & Cooperation Projects · [AGPLv3 License](../LICENSE)

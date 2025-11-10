@@ -1,63 +1,96 @@
-# Changelog
+# 📓 Changelog
+
+All notable changes to this project will be documented in this file.  
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),  
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## Version 1.1.0 (first public beta release) 
+## [Unreleased]
 
-### **New Features**
-- **Properties**: Added colors (including roof and building colors), e.g., a “brown (bench).”
-- **OSM Expert Editor**: Added the first version of an editor to update and add tags to existing OSM queries in the GUI.
-- **Feedback Form**: Added a form to the GUI to allow users to give direct feedback.
-
-### **Fixes**
-- **New Training Data**: Better entity and property detection via improvements to data generation and training parameters.
-
-### **Work in Progress**
-- **Laid Groundwork for Entity Clusters**: Ability to generate training data for clusters of entities, allowing queries like "3 Italian restaurants next to each other" or "at least 5 wind generators in a radius of 200 m." This feature will be available in a future model iteration.
+### Added
+- Unified README format for all SPOT modules
+- CONTRIBUTING.md and CODE_OF_CONDUCT.md
+- Initial AGPLv3 license
+- Centralized Docker Compose file for all modules
 
 ---
 
-## Version 1.0.0
+## [v1.2.0] 
 
-### **New Features**
+### Added
+- **Cluster Entities**: Support for queries involving multiple entities of the same type (e.g. "three benches", "two windmills next to each other").
+- **Ambiguous Term Definitions**: Added relative spatial terms (e.g. "next to", "nearby") with associated distance values; included new "contains" indicators (e.g. "in", "with").
 
-1. **Entity Detection**
-   - **Semantic Entities**: Spot identifies general categories like "restaurant" and "train station," allowing recognition of places based on type.
-   - **Named Entities (Brands)**: Detection of specific brand names, including "McDonald's," "KFC," "Tchibo," and compound names like "Thalia bookstore."
+### Changed
+- **Updated Tag Bundle List**: Refreshed tags and descriptors used in semantic search.
+- **Improved Prompting**: Enhanced prompts for training and inference to improve model accuracy.
 
-2. **Entity Properties**
-   - **Named Properties**: Spot identifies properties like "vegan (food shop)" or "Italian (restaurant)" for refined queries.
-   - **Numerical Properties**: Ability to interpret quantitative descriptors, including height, levels, and house numbers.
+### Fixed
+- **Benchmark Improvements**: Addressed several recurring error patterns by refining data generation and prompt parameters.
 
-3. **Area Recognition**
-   - **Named and Administrative Areas**: Support for cities, districts, and regions, including multi-word areas (e.g., "New York") and regions like "Nordrhein-Westfalen."
-   - **Bounding Box for Undefined Area Queries**: Introduces bounding box support for identifying entities within a broader, undefined area.
+---
 
-4. **Distance Relations**
-   - **Numerical and Written Distances**: Spot interprets both numeric distances (e.g., "100 meters") and written forms (e.g., "one hundred meters").
-   - **Relative Distance Terms**: Supports terms like "next to," "opposite from," and "beside" to improve natural understanding of spatial relationships.
-   - **Distance Chain and Radius Support**: Multiple distance-based relations are supported, including radius constraints (e.g., "A to B and C") and entity chains (e.g., "A to B and B to C").
+## [v1.1.1] 
 
-5. **Contains Relations**
-   - **Basic Containment**: Recognizes relationships such as "a fountain within a park" and "a shop inside a mall."
-   - **With Relations**: Expanded containment to support "with" relationships, such as "a park with a fountain" or "hotel with a parking lot."
+### Changed
+- **Taglist Reset**: Search engine updated with a revised tag list based on recent user feedback.
 
-6. **Spatial Terms and Descriptors**
-   - **Relative Distance Phrasing**: Enhanced natural language understanding for relative spatial terms like "close to," "next to," and "behind."
-   - **Descriptor Matching**: Improved matching of descriptors with slight variations, such as plurals ("bookshops" vs. "bookshop") and minor differences ("bookstore" vs. "book shop").
+---
 
-7. **Prompt and Linguistic Features**
-   - **Typo Handling**: Improved error tolerance to manage typos in names and common words (e.g., "MacDonalds" for "McDonald's").
-   - **Language Style Variability**: Added support for both formal and casual query styles.
-   - **Multilingual Area and Brand Names**: Recognizes area names and locations in multiple languages and alphabets, including non-Roman alphabets like Cyrillic and Greek.
-   - **Multiple Sentence Queries**: Supports both single and multi-sentence structures in user queries.
+## [v1.1.0] 
 
-8. **User Interface and Frontend Enhancements**
-   - **Rendering Results on the Map**: Results from natural language queries are displayed directly on the map, allowing users to visually locate and assess relevant areas.
-   - **Exploring Candidate Locations**: The interface integrates third-party map services, enabling users to investigate specific coordinates using tools like Google Maps or Google Street View.
-   - **Refining Search Queries Visually**: Users can modify search parameters interactively, including adjusting distance relations between objects for more targeted results.
-   - **Session Management**: Added functionality for saving search sessions for future use, as well as loading previously saved sessions to continue work seamlessly.
-   - **Exporting Map Data**: The system supports exporting map data in multiple formats, allowing users to use the data in external applications or workflows.
+### Added
+- **Property Support**: Recognizes color properties, including building and roof colors (e.g. “brown bench”).
+- **OSM Expert Editor**: GUI feature for editing and updating tags in OSM queries.
+- **User Feedback Form**: Direct input form for users embedded in the GUI.
 
-### **Fixes**
-- No fixes in version 1.0.0.
+### Fixed
+- **Improved Training Data**: Enhanced entity and property detection via optimized data generation.
+
+### Work in Progress
+- **Entity Cluster Foundation**: Added groundwork for entity cluster queries like "3 Italian restaurants next to each other". Full support coming in future updates.
+
+---
+
+## [v1.0.0]
+
+### Added
+
+#### Entity Detection
+- **Semantic Entities**: Detects general types (e.g. "restaurant", "train station").
+- **Named Entities (Brands)**: Recognizes brand names (e.g. "McDonald's", "KFC", "Thalia bookstore").
+
+#### Entity Properties
+- **Named Properties**: Includes descriptive tags like "vegan (food shop)" or "Italian (restaurant)".
+- **Numerical Properties**: Supports height, level, and house number detection.
+
+#### Area Recognition
+- **Named/Administrative Areas**: Supports multi-word areas and regions (e.g. "New York", "Nordrhein-Westfalen").
+- **Bounding Box**: Fallback for area queries without specific names.
+
+#### Distance Relations
+- **Written & Numeric Distances**: Understands "100 meters" and "one hundred meters".
+- **Relative Distance Terms**: Includes "next to", "opposite from", "beside".
+- **Distance Chains & Radius**: Complex relations like "A to B and B to C".
+
+#### Contains Relations
+- **Basic Containment**: Handles relations like "a fountain within a park".
+- **With Relations**: Adds support for "a hotel with a parking lot", etc.
+
+#### Spatial Terms & Descriptors
+- **Relative Phrasing**: Better interpretation of "close to", "behind", etc.
+- **Descriptor Matching**: Handles minor differences and plurals (e.g. "bookshops" vs "bookshop").
+
+#### Prompt & Linguistic Features
+- **Typo Handling**: Tolerates common spelling mistakes.
+- **Style Flexibility**: Supports both formal and casual query styles.
+- **Multilingual Support**: Recognizes names in various alphabets (e.g. Cyrillic, Greek).
+- **Multi-Sentence Queries**: Processes both single and compound sentence inputs.
+
+#### User Interface
+- **Map Result Rendering**: Displays results directly on the map.
+- **Candidate Exploration**: Links to Google Maps and Street View.
+- **Visual Query Editing**: GUI for refining spatial relations interactively.
+- **Session Management**: Save/load search sessions.
+- **Data Export**: Export results in various formats for external use.
