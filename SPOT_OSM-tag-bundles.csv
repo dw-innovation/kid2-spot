@@ -132,7 +132,7 @@ fd88f1a5-69b7-4c5f-a7fd-a8f53fc681ab,tent|permanent tent|camping shelter|tepee|t
 5ba85e65-41a9-4a3b-9927-61db7878b799,construction material|fabrication material|Material|Construction Material|Surface Material|Building Material,,prop,"building:material=***example***, material=***example***"
 82c3b898-2d3a-4387-a9e8-74690a636a58,height,,prop,height=***numeric***
 d6a52ea0-ccad-4a12-9617-4fbf34ff2b68,ambulance station|medical dispatch center|paramedic hub|rescue facility,area,core,emergency=ambulance_station
-4b732c97-4fed-48d8-a62c-eacf922396a6,defibrillator|heart starter|cardiac device|AED|cardiac resuscitator|pulse generator|emergency cardiac aid,,core,emergency=defibrillator
+4b732c97-4fed-48d8-a62c-eacf922396a6,emergency cardiac aid|heart starter|aed|pulse generator|cardiac resuscitator|cardiac device|defibrillator,,core,emerge=defibrillator
 977fb525-a738-4880-a663-883a8b25e1b1,landing site|emergency airstrip|emergency landing area|emergency landing site,area,core,emergency=landing_site
 34c0f578-c899-4c44-9c9e-2be0b7c5c37b,emergency ward entrance|ER entrance|emergency room entrance|hospital emergency access|ambulance bay|casualty ward entrance|first aid access,,core,emergency=emergency_ward_entrance
 8bcdf2e8-3c80-4b0d-88b0-2d9cb308ddd2,Emergency Exit|fire exit|safety door|escape route exit|exit point|escape hatch|rescue exit|evacuation exit,,core,entrance=emergency
