@@ -538,7 +538,7 @@ e12593c7-c65d-4f09-96d0-3de13cea205a,elevator|lift|building elevator|external el
 b9b7c358-215f-450a-a51d-880ac144efaa,pet shop|animal shop|animal care shop|pet store,,core,"shop=pet, shop=pet_grooming"
 37254e0e-6881-45d1-9eae-93d1a1c0c283,stadium|stadion|pitch|sports centre|sport pitch|(sport) field,,core,"leisure=stadium, leisure=pitch, building=stadium, stadium=football, stadium=soccer, leisure=sports_centre"
 54ad168d-a7f0-47cc-9708-8ef533969a5d,sport|Sport Type|Sport Played Here|Sports Category,,prop,sport=***example***
-cf0b8ae9-f92d-424d-8e7d-458d17320a37,building|a building|some kind of building|Facility ,,core,building=***any***
+cf0b8ae9-f92d-424d-8e7d-458d17320a37,some kind of building|building|facility|a building,,core,building=***any***
 7bb4f870-6e50-42fd-b6c2-2ae0fb3bfa05,(building) colour|(wall) color|painting color|color|colour|hue|shade|tint|Exterior Colour|Primary Surface Color|primary colour,,prop,"building:colour=***example***, colour=***example***, building:colour=***example***, roof:colour=***example***"
 9b49cd47-4063-4d91-9922-f9cb71f560ae,roof color|roof colour|roofing color|roofing colour|rooftop shade|Rooftop Hue,,prop,roof:colour=***example***
 4c7a4737-aeb4-40f4-a29a-134d432f8ba5,vegan|vegan diet|plant-based|Vegan-Friendly|Vegan Options Available|Offers Vegan Choices|Accommodates Vegan Diets|Plant-Based Options|Vegan-Only|Fully Vegan|100% Plant-Based ,,prop,"diet:vegan=yes, diet:vegan=only"
