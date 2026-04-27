@@ -58,7 +58,7 @@ b4459e4d-8a05-4b74-973f-8abdd6873947,tv studio|radio studio|recording studio|pro
 01e3e3ae-8a0f-4ee6-b22f-3325284bba0d,courthouse|court of law|court|tribunal|justice building|courtroom|judicial center|legal center,area,core,amenity=courthouse
 0fc0717a-6f08-4b39-bc49-8ba1a38206a8,fire station|fire brigade station|firehouse|fire department|fire brigade,area,core,"amenity=fire_station, building=fire_station"
 f8aa4935-47f1-477c-8196-252667840551,police station|police headquarters|cop shop|law enforcement center|police post|police precinct|station house,area,core,amenity=police
-526f910f-2bbc-4006-b217-63b6ad2e3eca,post box|letter box|mailbox|maildrop|pillar box|parcel drop box|mailing container|letterbox,point,core,"amenity=post_box, amenity=letter_box"
+526f910f-2bbc-4006-b217-63b6ad2e3eca,parcel drop box|mailing container|maildrop|letter box|letterbox|post box|pillar box|mailbox,point,core,"amenity=post_box, amenity=letter_box"
 22532ee7-9ee7-4cd1-b787-43dac37afe04,post office|general post office|postal service|postal station|post office box,area,core,"amenity=post_office, amenity=mailroom, amenity=post_depot, amenity=parcel_locker"
 c976e041-5a8a-4ca0-90f7-9033ecca44c7,prison|jail|penitentiary|lockup|brig|slammer|bastille|penitentiary institution|correctional facility|detention center,area,core,amenity=prison
 6e563ec9-606a-4d03-836a-d3f8209629fe,ranger station|National Park visitor headquarters|park visitor facility|forestry station|national park visitor center|national park information center,area,core,amenity=ranger_station
