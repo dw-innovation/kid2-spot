@@ -26,7 +26,11 @@ SPOT is an open-source tool that lets you search the world using natural languag
 SPOT relies on a curated list of OSM tag bundles to interpret user queries correctly. If you notice a query doesn’t work as expected, it might be due to a missing or mismatched tag.
 
 [📄 View the tag bundles list (CSV)](./SPOT_OSM-tag-bundles.csv)  
-[💬 Submit a suggestion or correction → Pinned Issue](https://github.com/dw-innovation/kid2-spot/issues/12#issue-3606799099)  
+[💬 Submit a suggestion or correction → Pinned Issue](https://github.com/dw-innovation/kid2-spot/issues/12#issue-3606799099)
+
+┈┈┈┈┈┈┈┈┈┈┈
+
+[💻 Alternatively, you can use the Interactive Tag Viewer & Editor](https://tags.findthatspot.io/)
 
 ---
 
